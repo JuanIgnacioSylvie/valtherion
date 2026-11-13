@@ -57,7 +57,10 @@ API: **4100**. Web: **3001**.
 - [x] API Fastify (:4100) + Prisma/Postgres (:5433) + seed DB
 - [x] Pack reglas D&D 2024 (esqueleto + compendium mínimo + rolls)
 - [x] Fallback: si la DB está caida, `/worlds/:id` lee `content/.../seed.json`
-- [ ] Mapa artístico HD (export Azgaar / tiles)
+- [x] Mundi biomes v2 según lore tripartito + zoom 0 = mapamundi
+- [x] Demo LOD2 Cenizabrava con zoom nativo (anti-pixel)
+- [ ] Multi-LOD completo (tiles / más ciudades / pisos) — ver `docs/MAP-LODS.md`
+- [ ] Iterar arte del mundi hasta calzar 100% con visión de diseño
 - [ ] Auth real + partidas multiplayer
 - [ ] Editor DM de pins/lore
 - [ ] Escena táctica con tokens sobre el atlas

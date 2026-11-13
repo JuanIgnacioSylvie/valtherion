@@ -39,10 +39,29 @@ export interface LoreNodeDto {
   dmOnly: boolean;
 }
 
+/** Escena HD anclada al mundi (ciudad, dungeon, etc.). Coordenadas en espacio del mundo. */
+export interface MapSceneDto {
+  id: string;
+  label: string;
+  kind: "settlement" | "district" | "interior" | "region";
+  /** Bounding box en coords del mundi. */
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  mapImage: string;
+  /** Zoom relativo (1 = mapamundi) a partir del cual se muestra. */
+  minZoomRelative: number;
+  maxZoomRelative: number;
+  pinId?: string | null;
+  loreNodeId?: string | null;
+}
+
 export interface WorldBundleDto {
   world: WorldDto;
   pins: PinDto[];
   loreNodes: LoreNodeDto[];
+  scenes?: MapSceneDto[];
 }
 
 export interface RulePackMeta {

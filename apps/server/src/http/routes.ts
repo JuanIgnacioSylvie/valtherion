@@ -7,8 +7,13 @@ import type { WorldBundleDto } from "@valtherion/contracts";
 import { loadWorldSeed } from "../worldSeed.js";
 
 async function getWorldBundle(id: string): Promise<WorldBundleDto | null> {
+  const fileSeed = loadWorldSeed(id);
+
   try {
-    const world = await prisma.world.findUnique({ where: { id } });
+    const world = await Promise.race([
+      prisma.world.findUnique({ where: { id } }),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), 400)),
+    ]);
     if (world) {
       const [pins, loreNodes] = await Promise.all([
         prisma.pin.findMany({ where: { worldId: id } }),
@@ -43,12 +48,15 @@ async function getWorldBundle(id: string): Promise<WorldBundleDto | null> {
           tags: n.tags,
           dmOnly: n.dmOnly,
         })),
+        // Escenas HD viven en seed de disco hasta tener tabla Scene.
+        scenes: fileSeed?.scenes ?? [],
       };
     }
   } catch {
-    // DB offline → seed en disco
+    // DB offline / lenta → seed en disco
   }
-  return loadWorldSeed(id);
+
+  return fileSeed;
 }
 
 export async function registerRoutes(app: FastifyInstance) {

@@ -19,12 +19,15 @@ export function SideRail() {
   const setSideTab = useAtlasStore((s) => s.setSideTab);
   const world = useAtlasStore((s) => s.world);
   const pins = useAtlasStore((s) => s.pins);
-  const zoom = useAtlasStore((s) => s.zoom);
+  const zoomRelative = useAtlasStore((s) => s.zoomRelative);
   const showGrid = useAtlasStore((s) => s.showGrid);
   const setShowGrid = useAtlasStore((s) => s.setShowGrid);
-  const gridMinZoom = useAtlasStore((s) => s.gridMinZoom);
+  const gridMinZoomRelative = useAtlasStore((s) => s.gridMinZoomRelative);
   const openLore = useAtlasStore((s) => s.openLore);
   const loreById = useAtlasStore((s) => s.loreById);
+  const scenes = useAtlasStore((s) => s.scenes);
+  const activeSceneIds = useAtlasStore((s) => s.activeSceneIds);
+  const requestFocusScene = useAtlasStore((s) => s.requestFocusScene);
 
   const [rules, setRules] = useState<{ meta: RulePackMeta; compendium: CompendiumEntry[] } | null>(
     null,
@@ -69,26 +72,64 @@ export function SideRail() {
       <div className="min-h-0 flex-1 overflow-y-auto p-4 text-sm text-parchment/90">
         {sideTab === "layers" && (
           <div className="space-y-4">
-            <p className="text-mist">Zoom actual: {(zoom * 100).toFixed(0)}%</p>
+            <p className="text-mist">
+              Zoom: {(zoomRelative * 100).toFixed(0)}%
+              <span className="text-mist/70"> (100% = mapamundi)</span>
+            </p>
             <label
               className={cn(
                 "flex items-center justify-between gap-2 rounded-sm border border-white/10 px-3 py-2",
-                zoom < gridMinZoom && "opacity-40",
+                zoomRelative < gridMinZoomRelative && "opacity-40",
               )}
             >
               <span>Mostrar grilla</span>
               <input
                 type="checkbox"
                 checked={showGrid}
-                disabled={zoom < gridMinZoom}
+                disabled={zoomRelative < gridMinZoomRelative}
                 onChange={(e) => setShowGrid(e.target.checked)}
               />
             </label>
-            {zoom < gridMinZoom && (
+            {zoomRelative < gridMinZoomRelative && (
               <p className="text-xs text-mist">
-                La grilla se habilita desde {(gridMinZoom * 100).toFixed(0)}% de zoom.
+                La grilla se habilita desde {(gridMinZoomRelative * 100).toFixed(0)}% relativo.
               </p>
             )}
+            <p className="text-xs text-mist/80">
+              Mundi procedural en GPU: el zoom no pixela (detalle infinito). Ciudades/interiores: capas LOD (ver{" "}
+              <code className="text-brass/80">docs/MAP-LODS.md</code>).
+            </p>
+            <div>
+              <h3 className="mb-2 font-display text-brass">Escenas HD (LOD)</h3>
+              {scenes.length === 0 ? (
+                <p className="text-xs text-mist">Todavía no hay ciudades ancladas.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {scenes.map((s) => {
+                    const active = activeSceneIds.includes(s.id);
+                    return (
+                      <li key={s.id}>
+                        <button
+                          type="button"
+                          onClick={() => requestFocusScene(s.id)}
+                          className={cn(
+                            "w-full rounded-sm border px-2 py-2 text-left text-xs transition",
+                            active
+                              ? "border-brass/50 bg-brass/10 text-brass"
+                              : "border-white/10 hover:border-brass/30 hover:bg-white/5",
+                          )}
+                        >
+                          <span className="block font-medium">{s.label}</span>
+                          <span className="text-mist">
+                            desde {(s.minZoomRelative * 100).toFixed(0)}% · clic para ir
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
             <div>
               <h3 className="mb-2 font-display text-brass">Pins cargados</h3>
               <ul className="space-y-1 text-xs">
@@ -101,7 +142,8 @@ export function SideRail() {
               </ul>
             </div>
             <p className="text-xs text-mist">
-              Arrastrá el mapa · rueda para zoom · clic en un pin para abrir lore.
+              Arrastrá el mapa · rueda para zoom · clic en un pin para lore. En Escenas HD → Cenizabrava
+              para ver la ciudad HD a zoom nativo.
             </p>
           </div>
         )}
