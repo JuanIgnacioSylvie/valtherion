@@ -96,7 +96,7 @@ export function SideRail() {
               </p>
             )}
             <p className="text-xs text-mist/80">
-              Mundi procedural en GPU: el zoom no pixela (detalle infinito). Ciudades/interiores: capas LOD (ver{" "}
+              Mundi estilo atlas D&D (pintado + detalle GPU al zoomear). Ciudades/interiores: capas LOD (ver{" "}
               <code className="text-brass/80">docs/MAP-LODS.md</code>).
             </p>
             <div>

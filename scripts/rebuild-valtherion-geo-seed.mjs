@@ -69,7 +69,7 @@ seed.world = {
   description: "El mundo tripartito — Korthaven, Aurion, Lexmara y las tres islas del Mar Interior.",
   width: W,
   height: H,
-  mapImage: "/worlds/valtherion/map-biomes-v2.jpg",
+  mapImage: "/worlds/valtherion/map-dnd-v4.jpg",
   rulePackId: "dnd-2024",
 };
 

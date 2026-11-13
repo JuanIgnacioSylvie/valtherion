@@ -4,7 +4,7 @@
     "name": "Valtherion",
     "width": 1920,
     "height": 911,
-    "mapImage": "/worlds/valtherion/map-biomes-v2.jpg",
+    "mapImage": "/worlds/valtherion/map-dnd-v4.jpg",
     "rulePackId": "dnd-2024",
     "description": "El mundo tripartito — Korthaven, Aurion, Lexmara y las tres islas del Mar Interior."
   },
@@ -1033,7 +1033,7 @@
     },
     "geography": "lore-valtherion-tripartite-v2",
     "note": "Zytzayna descartado; layout según texto del mundo tripartito.",
-    "updatedAt": "2026-11-13T22:15:57.062Z"
+    "updatedAt": "2026-11-13T22:23:15.100Z"
   },
   "scenes": [
     {

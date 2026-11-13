@@ -111,6 +111,10 @@ export function AtlasCanvas() {
       layers.push(app.canvas);
       host.replaceChildren(...layers);
       terrain?.resize(Math.max(host.clientWidth, 1), Math.max(host.clientHeight, 1));
+      terrain?.setWorldSize(worldW, worldH);
+      if (terrain) {
+        await terrain.loadPaint(`/worlds/valtherion/map-dnd-v4.jpg?v=1`);
+      }
 
       const stage = new Container();
       stage.eventMode = "static";
@@ -139,10 +143,11 @@ export function AtlasCanvas() {
       }
 
       const labelStyle = new TextStyle({
-        fill: "#e8dcc8",
-        fontSize: 13,
-        fontFamily: "Georgia, serif",
-        stroke: { color: "#0c1218", width: 3 },
+        fill: "#f4efe4",
+        fontSize: 14,
+        fontFamily: "Georgia, 'Palatino Linotype', serif",
+        fontWeight: "bold",
+        stroke: { color: "#1a120c", width: 4 },
       });
 
       let fitZoom = 1;
