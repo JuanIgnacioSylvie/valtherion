@@ -121,6 +121,9 @@ export class TerrainRenderer {
 
   draw(offsetX: number, offsetY: number, zoom: number) {
     const { gl } = this;
+    const z = zoom * this.scale;
+    // Por debajo de ~2 px/unidad el JPG ya se nota estirado → apagar paint.
+    const usePaint = !!this.paintTex && z < 1.75;
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
@@ -128,9 +131,9 @@ export class TerrainRenderer {
     if (this.paintTex) gl.bindTexture(gl.TEXTURE_2D, this.paintTex);
     gl.uniform2f(this.uRes, this.canvas.width, this.canvas.height);
     gl.uniform2f(this.uOffset, offsetX * this.scale, offsetY * this.scale);
-    gl.uniform1f(this.uZoom, zoom * this.scale);
+    gl.uniform1f(this.uZoom, z);
     gl.uniform2f(this.uWorld, this.worldW, this.worldH);
-    gl.uniform1f(this.uHasPaint, this.paintTex ? 1 : 0);
+    gl.uniform1f(this.uHasPaint, usePaint ? 1 : 0);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
   }
 

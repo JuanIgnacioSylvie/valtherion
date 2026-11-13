@@ -16,11 +16,13 @@ type CacheEntry = {
   lastUsed: number;
 };
 
-const CACHE_MAX = 96;
+const CACHE_MAX = 128;
 
 /**
- * Capa de pirámide de tiles del mundi.
- * Raster on-demand (GPU) → cada nivel tiene píxeles propios = sin estirar el JPG.
+ * Pirámide de tiles on-demand.
+ * Solo muestra el nivel actual (nunca estira un nivel bajo).
+ * `coverage` indica qué % de tiles del nivel ya están listos → el atlas
+ * deja el terrain de fondo hasta que haya cobertura suficiente.
  */
 export class WorldTileLayer {
   readonly root = new Container();
@@ -31,6 +33,8 @@ export class WorldTileLayer {
   private loading = new Set<string>();
   private currentLevel = 0;
   private destroyed = false;
+  /** 0..1 fracción de tiles visibles ya rasterizados en el nivel actual. */
+  coverage = 0;
 
   private constructor(ras: TileRasterizer, worldW: number, worldH: number) {
     this.ras = ras;
@@ -51,15 +55,19 @@ export class WorldTileLayer {
     return new WorldTileLayer(ras, worldW, worldH);
   }
 
-  /**
-   * Actualiza tiles visibles.
-   * stageOffset/zoom = stage.position / stage.scale de Pixi (px CSS).
-   * viewW/viewH = tamaño del viewport CSS.
-   */
+  get level() {
+    return this.currentLevel;
+  }
+
   sync(stageOffsetX: number, stageOffsetY: number, zoom: number, viewW: number, viewH: number) {
     if (this.destroyed || zoom <= 0) return;
     const level = Math.min(TILE_LEVEL_MAX, levelForZoom(zoom, this.worldW));
     this.currentLevel = level;
+    this.ras.cancelOtherLevels(level);
+    // Limpiar loading huérfano de otros niveles (si el job se canceló sin then)
+    for (const key of [...this.loading]) {
+      if (!key.startsWith(`${level}/`)) this.loading.delete(key);
+    }
 
     const left = -stageOffsetX / zoom;
     const top = -stageOffsetY / zoom;
@@ -71,29 +79,30 @@ export class WorldTileLayer {
       this.worldH,
       level,
       { left, top, right, bottom },
-      1,
+      0,
     );
     const neededKeys = new Set(needed.map((t) => tileKey(level, t.x, t.y)));
     const now = performance.now();
 
+    let ready = 0;
     for (const { x, y } of needed) {
       const key = tileKey(level, x, y);
       const hit = this.cache.get(key);
       if (hit) {
         hit.lastUsed = now;
         hit.sprite.visible = true;
+        ready++;
         continue;
       }
       if (this.loading.has(key)) continue;
       this.loading.add(key);
       const b = tileBounds(this.worldW, level, x, y);
-      void this.ras.enqueue(b.wx, b.wy, b.ww).then((bmp) => {
+      void this.ras.enqueue(key, level, b.wx, b.wy, b.ww).then((bmp) => {
         this.loading.delete(key);
         if (this.destroyed || !bmp) {
           bmp?.close();
           return;
         }
-        // Si el nivel ya cambió, igual cacheamos por si vuelve.
         const texture = Texture.from(bmp);
         const sprite = new Sprite(texture);
         sprite.x = b.wx;
@@ -107,11 +116,23 @@ export class WorldTileLayer {
       });
     }
 
-    // Ocultar tiles de otros niveles / fuera de vista
     for (const [key, entry] of this.cache) {
       const show = entry.level === level && neededKeys.has(key);
       entry.sprite.visible = show;
       if (show) entry.lastUsed = now;
+    }
+
+    this.coverage = needed.length === 0 ? 1 : ready / needed.length;
+
+    if (typeof window !== "undefined") {
+      (window as unknown as { __tileDebug?: unknown }).__tileDebug = {
+        level,
+        needed: needed.length,
+        ready,
+        coverage: this.coverage,
+        loading: this.loading.size,
+        cached: this.cache.size,
+      };
     }
   }
 

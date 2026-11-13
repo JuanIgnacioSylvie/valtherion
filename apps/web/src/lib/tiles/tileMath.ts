@@ -14,8 +14,9 @@ export function tileWorldSize(worldW: number, level: number): number {
  */
 export function levelForZoom(zoom: number, worldW: number): number {
   if (zoom <= 0 || worldW <= 0) return 0;
+  // ceil: preferir más resolución antes de que el tile se note estirado
   const raw = Math.log2((worldW * zoom) / TILE_PX);
-  return Math.max(0, Math.min(TILE_LEVEL_MAX, Math.round(raw)));
+  return Math.max(0, Math.min(TILE_LEVEL_MAX, Math.ceil(raw)));
 }
 
 export function tileCountX(worldW: number, level: number): number {
@@ -46,7 +47,7 @@ export function visibleTiles(
   worldH: number,
   level: number,
   view: { left: number; top: number; right: number; bottom: number },
-  pad = 1,
+  pad = 0,
 ): Array<{ x: number; y: number }> {
   const s = tileWorldSize(worldW, level);
   const maxX = tileCountX(worldW, level) - 1;

@@ -173,10 +173,13 @@ export function AtlasCanvas() {
       function syncTiles() {
         if (!app || !tileLayer) return;
         tileLayer.sync(stage.position.x, stage.position.y, zoom, app.screen.width, app.screen.height);
-        // A zoom medio/alto los tiles cubren; atenuar el fullscreen para no pelear.
+        // Terrain de fondo hasta que el nivel actual tenga tiles (si no: huecos o tiles viejos estirados).
         if (terrain) {
           const zRel = zoomRelative();
-          terrain.canvas.style.opacity = zRel >= 2.2 ? "0" : zRel >= 1.4 ? "0.45" : "1";
+          const covered = tileLayer.coverage >= 0.7;
+          if (zRel < 1.3) terrain.canvas.style.opacity = "1";
+          else if (!covered) terrain.canvas.style.opacity = "1";
+          else terrain.canvas.style.opacity = "0";
         }
       }
 
@@ -224,13 +227,36 @@ export function AtlasCanvas() {
         }
       }
 
+      function viewWorldRect() {
+        if (!app) return { left: 0, top: 0, right: worldW, bottom: worldH };
+        const left = -stage.position.x / zoom;
+        const top = -stage.position.y / zoom;
+        return {
+          left,
+          top,
+          right: left + app.screen.width / zoom,
+          bottom: top + app.screen.height / zoom,
+        };
+      }
+
+      function sceneInView(scene: MapSceneDto) {
+        const v = viewWorldRect();
+        return !(
+          scene.x + scene.width < v.left ||
+          scene.x > v.right ||
+          scene.y + scene.height < v.top ||
+          scene.y > v.bottom
+        );
+      }
+
       async function syncScenes() {
         if (cancelled || !app) return;
         const zRel = zoomRelative();
         const active: string[] = [];
 
         for (const scene of scenesRef.current) {
-          const shouldShow = zRel >= scene.minZoomRelative && zRel <= scene.maxZoomRelative;
+          const inZoom = zRel >= scene.minZoomRelative && zRel <= scene.maxZoomRelative;
+          const shouldShow = inZoom && sceneInView(scene);
           let node = sceneNodes.get(scene.id);
 
           if (shouldShow) {

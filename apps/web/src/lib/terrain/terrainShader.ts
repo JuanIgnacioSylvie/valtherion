@@ -294,45 +294,58 @@ void main() {
     col = mix(col, mix(col, PARCH * 0.7, 0.5), clamp((-F - 0.15) * 0.35 + parchWash * 0.08, 0.0, 0.35));
   }
 
-  // —— Arte D&D pintado como base; procedural = detalle/borde al zoomear ——
+  // —— Paint solo en overview. A zoom medio/alto: CERO texels del JPG (eso pixelaba). ——
   if (uHasPaint > 0.5) {
     vec2 uv = p / uWorld;
     float inWorld = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
     if (inWorld < 0.5) {
-      // Fuera del mundi: pergamino (no azul vacío)
       float wash = fbm(pn * 1.2 + vec2(0.3, 0.9), uZoom * 900.0, 3);
       col = mix(PARCH * 0.72, OCEAN_DEEP * 0.55, 0.35 + wash * 0.1);
     } else {
       vec2 uvc = clamp(uv, 0.0, 1.0);
-      vec3 paint = texture(uPaint, uvc).rgb;
 
-      // Silueta tierra/agua desde el cuadro (no desde blobs)
+      // Cuanto paint se VE: baja a 0 muy temprano (antes de que el JPG se note estirado).
+      // uZoom = px de pantalla por unidad de mundo; fit suele ser ~0.5–1.2.
+      float paintAmt = smoothstep(1.8, 0.7, uZoom);
+
+      // Clasificadores desde paint (ok muestrear; no se usan como color a zoom alto).
+      vec3 paint = texture(uPaint, uvc).rgb;
       float landHint = clamp((paint.r + paint.g) * 0.55 - paint.b * 0.7 + 0.18, 0.0, 1.0);
       landHint = smoothstep(0.28, 0.55, landHint);
-
-      // Borde de costa nítido (sobel sobre el paint)
-      float px = 1.0 / 1400.0;
-      float l1 = texture(uPaint, uvc + vec2(px, 0.0)).g + texture(uPaint, uvc + vec2(px, 0.0)).r;
-      float l2 = texture(uPaint, uvc - vec2(px, 0.0)).g + texture(uPaint, uvc - vec2(px, 0.0)).r;
-      float l3 = texture(uPaint, uvc + vec2(0.0, px)).g + texture(uPaint, uvc + vec2(0.0, px)).r;
-      float l4 = texture(uPaint, uvc - vec2(0.0, px)).g + texture(uPaint, uvc - vec2(0.0, px)).r;
-      float edge = length(vec2(l1 - l2, l3 - l4));
-      float inkCoast = smoothstep(0.08, 0.35, edge);
-
-      // Microdetalle que NO se estira: grano + bosque/crestas encima del paint
-      float detailAmt = smoothstep(1.6, 4.5, uZoom);
-      vec3 detailed = paint;
-
-      // grano de pergamino / pincel
-      float paper = fbm(pn * 180.0, uZoom * 5.5, 5);
-      detailed *= 1.0 + detailAmt * paper * 0.14;
-
-      // árboles donde el paint es verde (bosque)
       float greenness = paint.g - max(paint.r, paint.b) * 0.65;
       float forestMask = smoothstep(0.02, 0.12, greenness) * landHint;
-      float tcell = 2.4;
-      float tVis = smoothstep(5.0, 11.0, tcell * uZoom) * forestMask;
-      if (tVis > 0.05) {
+      float rocky = smoothstep(0.08, 0.0, abs(paint.r - paint.g)) * (1.0 - paint.b) * landHint;
+
+      // —— Zoom alto: NADA del JPG. Suelo + vegetacion por estampas (1 px nítido). ——
+      vec3 crisp = col;
+      float onLand = max(landHint, step(0.0, F));
+
+      // Suelo: celdas de hierba/tierra (rompe el “fbm suave” que parece JPG)
+      float gcell = 1.1;
+      float gVis = smoothstep(2.5, 6.0, gcell * uZoom) * onLand * (1.0 - paintAmt);
+      if (gVis > 0.01) {
+        vec2 gg = floor(p / gcell);
+        float gh = hash1(gg + vec2(4.0, 8.0));
+        float gh2 = hash1(gg + vec2(11.0, 3.0));
+        vec3 dirt = vec3(0.42, 0.36, 0.22);
+        vec3 grassA = vec3(0.22, 0.40, 0.18);
+        vec3 grassB = vec3(0.30, 0.52, 0.24);
+        // tinte selva si el paint era muy verde (solo escalar, no texel)
+        grassA = mix(grassA, vec3(0.12, 0.38, 0.16), clamp(greenness * 3.0, 0.0, 1.0));
+        grassB = mix(grassB, vec3(0.20, 0.48, 0.20), clamp(greenness * 3.0, 0.0, 1.0));
+        vec3 cell = mix(dirt, mix(grassA, grassB, gh2), 0.55 + 0.45 * forestMask);
+        cell *= 0.88 + 0.24 * gh;
+        crisp = mix(crisp, cell, gVis * 0.85);
+      }
+
+      // Arboles densos (dos escalas)
+      for (int pass = 0; pass < 2; pass++) {
+        float tcell = pass == 0 ? 2.0 : 1.15;
+        float dens = pass == 0
+          ? (0.35 + 0.55 * forestMask)
+          : (0.15 + 0.5 * forestMask);
+        float tVis = smoothstep(3.0, 7.0, tcell * uZoom) * onLand * dens * (1.0 - paintAmt);
+        if (tVis <= 0.02) continue;
         vec2 g = p / tcell;
         vec2 gi = floor(g);
         float bestY = -1e9;
@@ -341,13 +354,13 @@ void main() {
         for (int j = -1; j <= 1; j++) {
           for (int i = -1; i <= 1; i++) {
             vec2 id = gi + vec2(float(i), float(j));
-            float r0 = hash1(id + vec2(2.0, 9.0));
-            if (r0 > 0.55 + 0.35 * forestMask) continue;
+            float r0 = hash1(id + vec2(2.0 + float(pass) * 9.0, 9.0));
+            if (r0 > dens) continue;
             float r1 = hash1(id + vec2(31.0, 17.0));
             float r2 = hash1(id + vec2(7.0, 53.0));
             float r3 = hash1(id + vec2(91.0, 5.0));
-            vec2 c = id + 0.5 + (vec2(r1, r2) - 0.5) * 0.55;
-            float rad = 0.30 + 0.16 * r3;
+            vec2 c = id + 0.5 + (vec2(r1, r2) - 0.5) * 0.6;
+            float rad = 0.28 + 0.18 * r3;
             vec2 d = (g - c) / vec2(rad, rad * 0.88);
             if (length(d) < 1.0 && c.y > bestY) {
               bestY = c.y;
@@ -359,33 +372,18 @@ void main() {
         if (hit) {
           float r = length(bestD.xy);
           float l = clamp(dot(bestD.xy, normalize(vec2(-0.55, -0.7))) * 0.45 + 0.55, 0.0, 1.0);
-          vec3 canopy = mix(paint * 0.55, paint * 1.25 + vec3(0.04, 0.08, 0.0), l);
-          canopy = mix(canopy, INK * 0.5 + paint * 0.3, smoothstep(0.75, 1.0, r) * 0.6);
-          detailed = mix(detailed, canopy, tVis * (1.0 - smoothstep(0.85, 1.0, r)));
+          vec3 canopy = mix(vec3(0.10, 0.28, 0.12), vec3(0.26, 0.55, 0.20), l);
+          canopy = mix(canopy, INK * 0.4 + canopy * 0.45, smoothstep(0.72, 1.0, r) * 0.6);
+          crisp = mix(crisp, canopy, tVis * (1.0 - smoothstep(0.88, 1.0, r)));
         }
       }
 
-      // crestas en zonas grises/marrones (montaña)
-      float rocky = smoothstep(0.08, 0.0, abs(paint.r - paint.g)) * (1.0 - paint.b) * landHint;
-      float ridgeVis = smoothstep(6.0, 14.0, uZoom) * rocky;
+      float ridgeVis = smoothstep(4.0, 10.0, uZoom) * rocky * (1.0 - paintAmt);
       float rid = ridge(pn * 7.0 + vec2(3.0, 8.0), uZoom * 140.0, 5);
-      detailed = mix(detailed, mix(paint * 0.75, INK, 0.45), ridgeVis * smoothstep(0.5, 0.85, rid) * 0.55);
+      crisp = mix(crisp, mix(vec3(0.45, 0.42, 0.38), INK, 0.4), ridgeVis * smoothstep(0.5, 0.85, rid) * 0.55);
 
-      // tinta de costa siempre nítida (1–2 px de pantalla)
-      detailed = mix(detailed, INK, inkCoast * (0.35 + 0.4 * detailAmt) * landHint);
-      // espuma en agua junto a costa
-      detailed = mix(detailed, mix(paint, vec3(0.78, 0.86, 0.84), 0.5), inkCoast * (1.0 - landHint) * 0.35);
-
-      // Zoom bajo → paint D&D. Zoom alto → procedural nítido (tiles), tintado con el paint.
-      // Nunca se queda mostrando el JPG estirado (eso es lo que pixelaba).
-      float paintAmt = smoothstep(5.5, 1.4, uZoom);
-      vec3 paintLook = mix(paint, detailed, detailAmt);
-      // Procedural ya esta en col; lo tine levemente con el paint para no romper el estilo.
-      vec3 crisp = mix(col, paintLook, 0.22);
-      // En tierra del paint, preferir silueta del cuadro a zoom medio.
-      crisp = mix(crisp, mix(col, paintLook, 0.55), landHint * (1.0 - paintAmt) * 0.35);
-      col = mix(crisp, paintLook, paintAmt);
-    }
+      // Overview: paint. Zoom: crisp puro.
+      col = mix(crisp, paint, paintAmt);
     }
   }
 
