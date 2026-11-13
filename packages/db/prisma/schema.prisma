@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  displayName  String
+  createdAt    DateTime @default(now())
+
+  ownedCampaigns Campaign[]          @relation("CampaignDM")
+  memberships    CampaignMembership[]
+}
+
+model World {
+  id          String   @id
+  name        String
+  description String?
+  width       Int
+  height      Int
+  mapImage    String
+  rulePackId  String   @default("dnd-2024")
+  createdAt   DateTime @default(now())
+
+  pins      Pin[]
+  loreNodes LoreNode[]
+  campaigns Campaign[]
+}
+
+model Pin {
+  id          String  @id
+  worldId     String
+  kind        String
+  label       String
+  x           Float
+  y           Float
+  minZoom     Float   @default(0)
+  maxZoom     Float   @default(8)
+  loreNodeId  String?
+  color       String?
+  importance  Int     @default(1)
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@index([worldId])
+}
+
+model LoreNode {
+  id      String  @id
+  worldId String
+  title   String
+  body    String
+  tags    String[] @default([])
+  dmOnly  Boolean @default(false)
+
+  world World @relation(fields: [worldId], references: [id], onDelete: Cascade)
+
+  @@index([worldId])
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  worldId     String
+  rulePackId  String   @default("dnd-2024")
+  dmId        String
+  createdAt   DateTime @default(now())
+
+  world   World                @relation(fields: [worldId], references: [id])
+  dm      User                 @relation("CampaignDM", fields: [dmId], references: [id])
+  members CampaignMembership[]
+  scenes  Scene[]
+}
+
+model CampaignMembership {
+  id         String   @id @default(cuid())
+  campaignId String
+  userId     String
+  joinedAt   DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, userId])
+}
+
+model Scene {
+  id         String  @id @default(cuid())
+  campaignId String
+  name       String
+  pinId      String?
+  gridSize   Int     @default(5)
+  cols       Int     @default(20)
+  rows       Int     @default(20)
+  showGrid   Boolean @default(true)
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}

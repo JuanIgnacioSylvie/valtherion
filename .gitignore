@@ -1,0 +1,13 @@
+node_modules
+.turbo
+.next
+dist
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+apps/web/public/worlds/valtherion/Valtherion.source.json
+content/worlds/valtherion/Valtherion.source.json
+packages/db/.env

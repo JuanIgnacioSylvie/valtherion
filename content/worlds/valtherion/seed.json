@@ -1,0 +1,1268 @@
+{
+  "world": {
+    "id": "valtherion",
+    "name": "Valtherion",
+    "width": 1920,
+    "height": 911,
+    "mapImage": "/worlds/valtherion/map.svg",
+    "rulePackId": "dnd-2024",
+    "description": "El mundo tripartito — Era del Hombre."
+  },
+  "pins": [
+    {
+      "id": "pin-feature-1",
+      "kind": "ocean",
+      "label": "Océano",
+      "x": 956.2035624362056,
+      "y": 470.3970670296031,
+      "minZoom": 0,
+      "maxZoom": 1.2,
+      "loreNodeId": "feature-1",
+      "importance": 5
+    },
+    {
+      "id": "pin-feature-2",
+      "kind": "landmass",
+      "label": "Tierra 2",
+      "x": 1011.2949086161868,
+      "y": 567.771109660574,
+      "minZoom": 0,
+      "maxZoom": 1.2,
+      "loreNodeId": "feature-2",
+      "importance": 5
+    },
+    {
+      "id": "pin-feature-3",
+      "kind": "landmass",
+      "label": "island",
+      "x": 960.1218181818181,
+      "y": 200.6227272727273,
+      "minZoom": 0,
+      "maxZoom": 2.5,
+      "loreNodeId": "feature-3",
+      "importance": 2
+    },
+    {
+      "id": "pin-feature-4",
+      "kind": "landmass",
+      "label": "island",
+      "x": 509.4845801526718,
+      "y": 397.2374809160306,
+      "minZoom": 0,
+      "maxZoom": 2.5,
+      "loreNodeId": "feature-4",
+      "importance": 2
+    },
+    {
+      "id": "pin-feature-5",
+      "kind": "landmass",
+      "label": "island",
+      "x": 1411.0275182481741,
+      "y": 393.7781751824815,
+      "minZoom": 0,
+      "maxZoom": 2.5,
+      "loreNodeId": "feature-5",
+      "importance": 2
+    },
+    {
+      "id": "pin-state-1",
+      "kind": "kingdom",
+      "label": "Sangrevasto",
+      "x": 329.34,
+      "y": 495.72,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-1",
+      "color": "#8b1a1a",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-2",
+      "kind": "kingdom",
+      "label": "Ceniza",
+      "x": 329.34,
+      "y": 495.72,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-2",
+      "color": "#4a3728",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-3",
+      "kind": "kingdom",
+      "label": "Umbravalle",
+      "x": 329.34,
+      "y": 495.72,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-3",
+      "color": "#2d1b4e",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-4",
+      "kind": "kingdom",
+      "label": "Olvido",
+      "x": 979.79,
+      "y": 739.18,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-4",
+      "color": "#6b705c",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-5",
+      "kind": "kingdom",
+      "label": "Concordia",
+      "x": 979.79,
+      "y": 739.18,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-5",
+      "color": "#457b9d",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-6",
+      "kind": "kingdom",
+      "label": "Frontera",
+      "x": 979.79,
+      "y": 739.18,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-6",
+      "color": "#a8a29e",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-7",
+      "kind": "kingdom",
+      "label": "Solmarest",
+      "x": 1620.61,
+      "y": 424.58,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-7",
+      "color": "#ffd166",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-8",
+      "kind": "kingdom",
+      "label": "Aurelion",
+      "x": 1620.61,
+      "y": 424.58,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-8",
+      "color": "#f4a261",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-9",
+      "kind": "kingdom",
+      "label": "Lexford",
+      "x": 1620.61,
+      "y": 424.58,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-9",
+      "color": "#2a6f97",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-10",
+      "kind": "kingdom",
+      "label": "Nimrael",
+      "x": 971.09,
+      "y": 196.37,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-10",
+      "color": "#9d4edd",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-11",
+      "kind": "kingdom",
+      "label": "Drakonys",
+      "x": 512.15,
+      "y": 402.15,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-11",
+      "color": "#c1121f",
+      "importance": 5
+    },
+    {
+      "id": "pin-state-12",
+      "kind": "kingdom",
+      "label": "Selvareth",
+      "x": 1410.01,
+      "y": 401.55,
+      "minZoom": 0,
+      "maxZoom": 2.2,
+      "loreNodeId": "state-12",
+      "color": "#2d6a4f",
+      "importance": 5
+    },
+    {
+      "id": "pin-burg-1",
+      "kind": "capital",
+      "label": "Cenizabrava",
+      "x": 329.34,
+      "y": 495.72,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-1",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-2",
+      "kind": "settlement",
+      "label": "Garrasangre",
+      "x": 425.7,
+      "y": 337.65,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-2",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-3",
+      "kind": "settlement",
+      "label": "Mortisvalle",
+      "x": 441.88,
+      "y": 338.59,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-3",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-4",
+      "kind": "settlement",
+      "label": "Hextorhold",
+      "x": 435.6,
+      "y": 345.1,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-4",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-5",
+      "kind": "capital",
+      "label": "Brassara",
+      "x": 329.34,
+      "y": 495.72,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-5",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-6",
+      "kind": "settlement",
+      "label": "Rencorford",
+      "x": 411.72,
+      "y": 348.76,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-6",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-7",
+      "kind": "settlement",
+      "label": "Pira del Cuervo",
+      "x": 429.35,
+      "y": 351.63,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-7",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-8",
+      "kind": "capital",
+      "label": "Nigromar",
+      "x": 329.34,
+      "y": 495.72,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-8",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-9",
+      "kind": "settlement",
+      "label": "Sepulcris",
+      "x": 421.9,
+      "y": 360.2,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-9",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-10",
+      "kind": "capital",
+      "label": "Ruinas de Lumineth",
+      "x": 979.79,
+      "y": 739.18,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-10",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-11",
+      "kind": "settlement",
+      "label": "Campo de las Mil Espadas",
+      "x": 971.72,
+      "y": 630.78,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-11",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-12",
+      "kind": "settlement",
+      "label": "Memoria Perdida",
+      "x": 1010.17,
+      "y": 633.75,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-12",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-13",
+      "kind": "capital",
+      "label": "Mesas de la Paz",
+      "x": 979.79,
+      "y": 739.18,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-13",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-14",
+      "kind": "settlement",
+      "label": "Puente de Hierro",
+      "x": 872.21,
+      "y": 641.48,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-14",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-15",
+      "kind": "settlement",
+      "label": "Villa del Mediador",
+      "x": 874.74,
+      "y": 646.22,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-15",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-16",
+      "kind": "capital",
+      "label": "Vigilia del Alba",
+      "x": 979.79,
+      "y": 739.18,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-16",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-17",
+      "kind": "settlement",
+      "label": "Torreón Gris",
+      "x": 897.61,
+      "y": 643.33,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-17",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-18",
+      "kind": "capital",
+      "label": "Solmarest",
+      "x": 1620.61,
+      "y": 424.58,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-18",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-19",
+      "kind": "settlement",
+      "label": "Aureford",
+      "x": 1487.96,
+      "y": 311.73,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-19",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-20",
+      "kind": "settlement",
+      "label": "Catedral de Pholtus",
+      "x": 1519.03,
+      "y": 311.36,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-20",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-21",
+      "kind": "settlement",
+      "label": "Puerto Radiante",
+      "x": 1525.89,
+      "y": 311.99,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-21",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-22",
+      "kind": "capital",
+      "label": "Heliopolis",
+      "x": 1620.61,
+      "y": 424.58,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-22",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-23",
+      "kind": "settlement",
+      "label": "San Pelor",
+      "x": 1544.56,
+      "y": 310.64,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-23",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-24",
+      "kind": "settlement",
+      "label": "Valle Dorado",
+      "x": 1478.6,
+      "y": 328.3,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-24",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-25",
+      "kind": "capital",
+      "label": "Lexford",
+      "x": 1620.61,
+      "y": 424.58,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-25",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-26",
+      "kind": "settlement",
+      "label": "Heironea",
+      "x": 1496.28,
+      "y": 318.27,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-26",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-27",
+      "kind": "settlement",
+      "label": "Puerto del Juramento",
+      "x": 1512.77,
+      "y": 318.42,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-27",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-28",
+      "kind": "capital",
+      "label": "Alfheimar",
+      "x": 971.09,
+      "y": 196.37,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-28",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-29",
+      "kind": "settlement",
+      "label": "Torre de Corellon",
+      "x": 898.13,
+      "y": 159.51,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-29",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-30",
+      "kind": "capital",
+      "label": "Escama de Platino",
+      "x": 512.15,
+      "y": 402.15,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-30",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-31",
+      "kind": "settlement",
+      "label": "Cueva del Concilio",
+      "x": 520.3,
+      "y": 319.5,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-31",
+      "importance": 2
+    },
+    {
+      "id": "pin-burg-32",
+      "kind": "capital",
+      "label": "Bosque Eterno",
+      "x": 1410.01,
+      "y": 401.55,
+      "minZoom": 0.35,
+      "maxZoom": 8,
+      "loreNodeId": "burg-32",
+      "importance": 4
+    },
+    {
+      "id": "pin-burg-33",
+      "kind": "settlement",
+      "label": "Claro de Ehlonna",
+      "x": 1405.2,
+      "y": 319.2,
+      "minZoom": 0.85,
+      "maxZoom": 8,
+      "loreNodeId": "burg-33",
+      "importance": 2
+    }
+  ],
+  "loreNodes": [
+    {
+      "id": "world-valtherion",
+      "title": "Valtherion",
+      "body": "VALTHERION — EL MUNDO TRIPARTITO\n\nGeografía: tres continentes ([[place-korthaven|Korthaven]] al oeste, [[place-aurion|Aurion]] al sur, [[place-lexmara|Lexmara]] al este) y tres grandes islas — [[place-nimrael|Nimrael]], [[place-drakonys|Drakonys]] y [[place-selvareth|Selvareth]] — cuyos centros forman un triángulo equilátero perfecto en el [[place-mar-interior|Mar Interior]].\n\nERA ÉLFICA (pasada): reinos élficos llevaron luz y prosperidad a cada rincón del mundo conocido. Pero incursionaron en las profundidades del plano, cegados por el poder que allí podían encontrar… y en las profundidades quedaron enterrados para siempre. [Relato abstracto inconcluso]\n\nERA DEL HOMBRE (actual): la caída de los elfos no fue silenciosa. Ningún trono se salvó de ser salpicado con sangre. Los hombres llegaron para transformar esos campos de batalla en mesas de conversación.\n\nHan pasado cientos de años. Batallas, héroes y enseñanzas cayeron en el olvido, así como lo terrible de una guerra de tal magnitud.\n\nHoy: el caos reina en [[place-korthaven|Korthaven]] (continente occidental). La legalidad y el orden dominan [[place-lexmara|Lexmara]] (oriental). [[place-aurion|Aurion]], al sur, guarda ruinas y diplomacia entre ambos mundos.\n\nPoblación mundial: ~80% humanos.",
+      "tags": [
+        "world",
+        "history"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-pantheon",
+      "title": "Panteón de Valtherion",
+      "body": "DEIDADES VENERADAS EN VALTHERION\n\nMonte Celestia: Bahamut, Heironeous, Moradin, Rao\nArcadia: Cuthbert, Pholtus, Ulaa, Berei del Hogar\nElysium: Pelor\nYsgard: Kord, Olidammara\nOutlands: Boccob, Fharlanghn, Obad-Hai\nBeastlands: Ehlonna\nAcheron: Hextor, Wee Jas\nHades: Incabulos\nCarceri: Nerull\nGehenna: Syrul\nPandemonium: Erythnul\nMechanus: Istus\nLimbo: Ralishaz\nAbismo (capa 66): Lolth\nNueve Infiernos: Tiamat\nPlano Material: Beory, Iuz\nCorellon danza entre planos — culto residual entre elfos dispersos\nGruumsh: patrón orco, sin plano fijo\nTharizdun: Devorador, cultos nihilistas en las sombras\nVecna: Susurrado, buscadores de secretos",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-korthaven",
+      "title": "Korthaven — Continente del Caos",
+      "body": "El occidente arde en guerras de señores, cultos de Erythnul e Iuz, y teocracias sombrías bajo Incabulos. Sangrevasto, la Confederación de Ceniza y Umbravalle disputan cada valle.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-lexmara",
+      "title": "Lexmara — Continente del Orden",
+      "body": "El oriente prospera bajo el Imperio de Solmarest, el Reino de Aurelion y el Ducado de Lexford. Pholtus, Heironeous y Pelor estructuran la vida pública. Las leyes reemplazaron las espadas — al menos en apariencia.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-marker-campo-de-las-mil-espadas",
+      "title": "Campo de las Mil Espadas",
+      "body": "Donde la caída de los elfos dejó un mar de acero enterrado bajo flores olvidadas. Ningún cronista humano recuerda los nombres de los caídos.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-marker-monte-devorador",
+      "title": "Monte Devorador",
+      "body": "Se dice que aquí los elfos abrieron un portal hacia las profundidades del plano. Lo que salió no regresó; lo que entró no volvió.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-marker-puerta-de-nimrael",
+      "title": "Puerta de Nimrael",
+      "body": "Ruinas élficas en la cima del triángulo sagrado. Inscripciones en lengua feérica: «La luz no fue bienvenida en todas partes».",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-marker-concilio-draconiano",
+      "title": "Concilio Draconiano",
+      "body": "Isla Drakonys: dragones metálicos y cromáticos mantienen una tregua frágil bajo la sombra de Bahamut y Tiamat.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-marker-bosque-eterno",
+      "title": "Bosque Eterno",
+      "body": "Selvareth: último refugio druidico donde Ehlonna y Obad-Hai aún son invocados sin templos de piedra.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-marker-gran-tribunal-de-pholtus",
+      "title": "Gran Tribunal de Pholtus",
+      "body": "Lexmara: la ley escrita reemplazó la espada. Aquí se juzgan las disputas de medio continente.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-marker-profundidades-selladas",
+      "title": "Profundidades Selladas",
+      "body": "Relato inconcluso: los reinos élficos incursionaron cegados por el poder de las profundidades… y allí quedaron enterrados para siempre.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "note-marker-fortaleza-de-solmarest",
+      "title": "Fortaleza de Solmarest",
+      "body": "Capital del orden. Heironeous y Pholtus bendicen sus muros; el caos de Korthaven parece un rumor lejano.",
+      "tags": [
+        "note"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "feature-1",
+      "title": "ocean",
+      "body": "Tipo: **ocean**. Agua. Área aprox. 0.",
+      "tags": [
+        "feature",
+        "ocean"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "feature-2",
+      "title": "Continente / isla #2",
+      "body": "Tipo: **island**. Tierra · grupo `continent`. Área aprox. 418000.",
+      "tags": [
+        "feature",
+        "island"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "feature-3",
+      "title": "island",
+      "body": "Tipo: **island**. Tierra · grupo `isle`. Área aprox. 2200.",
+      "tags": [
+        "feature",
+        "island"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "feature-4",
+      "title": "island",
+      "body": "Tipo: **island**. Tierra · grupo `isle`. Área aprox. 26200.",
+      "tags": [
+        "feature",
+        "island"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "feature-5",
+      "title": "island",
+      "body": "Tipo: **island**. Tierra · grupo `isle`. Área aprox. 27400.",
+      "tags": [
+        "feature",
+        "island"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-1",
+      "title": "Reino de Sangrevasto",
+      "body": "**Kingdom** de tipo Hill.\n\nCapital: [[burg-1|Cenizabrava]].\n\nColor heráldico: `#8b1a1a`.\n\n\n### Diplomacia\n- [[state-1|Sangrevasto]]: Suspicion\n- [[state-2|Ceniza]]: Suspicion\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Enemy\n- [[state-7|Solmarest]]: Enemy\n- [[state-8|Aurelion]]: Enemy\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-2",
+      "title": "Confederación de Señores de Ceniza",
+      "body": "**Confederation** de tipo Generic.\n\nCapital: [[burg-5|Brassara]].\n\nColor heráldico: `#4a3728`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Suspicion\n- [[state-2|Ceniza]]: Suspicion\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Enemy\n- [[state-7|Solmarest]]: Enemy\n- [[state-8|Aurelion]]: Enemy\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-3",
+      "title": "Dominio de Umbravalle",
+      "body": "**Theocracy** de tipo Lake.\n\nCapital: [[burg-8|Nigromar]].\n\nColor heráldico: `#2d1b4e`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Suspicion\n- [[state-1|Sangrevasto]]: Suspicion\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Enemy\n- [[state-7|Solmarest]]: Enemy\n- [[state-8|Aurelion]]: Enemy\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-4",
+      "title": "Tierras del Olvido",
+      "body": "**Anarchy** de tipo Generic.\n\nCapital: [[burg-10|Ruinas de Lumineth]].\n\nColor heráldico: `#6b705c`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Neutral\n- [[state-1|Sangrevasto]]: Neutral\n- [[state-2|Ceniza]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Neutral\n- [[state-7|Solmarest]]: Neutral\n- [[state-8|Aurelion]]: Neutral\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-5",
+      "title": "República de Concordia",
+      "body": "**Republic** de tipo River.\n\nCapital: [[burg-13|Mesas de la Paz]].\n\nColor heráldico: `#457b9d`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Neutral\n- [[state-1|Sangrevasto]]: Neutral\n- [[state-2|Ceniza]]: Neutral\n- [[state-3|Umbravalle]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Neutral\n- [[state-7|Solmarest]]: Neutral\n- [[state-8|Aurelion]]: Neutral\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-6",
+      "title": "Marca Fronteriza de Aurion",
+      "body": "**Marches** de tipo Hill.\n\nCapital: [[burg-16|Vigilia del Alba]].\n\nColor heráldico: `#a8a29e`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Neutral\n- [[state-1|Sangrevasto]]: Neutral\n- [[state-2|Ceniza]]: Neutral\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-6|Frontera]]: Neutral\n- [[state-7|Solmarest]]: Neutral\n- [[state-8|Aurelion]]: Neutral\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-7",
+      "title": "Imperio de Solmarest",
+      "body": "**Empire** de tipo Generic.\n\nCapital: [[burg-18|Solmarest]].\n\nColor heráldico: `#ffd166`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Enemy\n- [[state-1|Sangrevasto]]: Enemy\n- [[state-2|Ceniza]]: Enemy\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-7|Solmarest]]: Ally\n- [[state-8|Aurelion]]: Ally\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-8",
+      "title": "Reino de Aurelion",
+      "body": "**Kingdom** de tipo Generic.\n\nCapital: [[burg-22|Heliopolis]].\n\nColor heráldico: `#f4a261`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Enemy\n- [[state-1|Sangrevasto]]: Enemy\n- [[state-2|Ceniza]]: Enemy\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Ally\n- [[state-8|Aurelion]]: Ally\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-9",
+      "title": "Ducado de Lexford",
+      "body": "**Duchy** de tipo River.\n\nCapital: [[burg-25|Lexford]].\n\nColor heráldico: `#2a6f97`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Enemy\n- [[state-1|Sangrevasto]]: Enemy\n- [[state-2|Ceniza]]: Enemy\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Ally\n- [[state-7|Solmarest]]: Ally\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-10",
+      "title": "Santuario Élfico de Nimrael",
+      "body": "**Sanctuary** de tipo Generic.\n\nCapital: [[burg-28|Alfheimar]].\n\nColor heráldico: `#9d4edd`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Neutral\n- [[state-1|Sangrevasto]]: Neutral\n- [[state-2|Ceniza]]: Neutral\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Neutral\n- [[state-7|Solmarest]]: Neutral\n- [[state-8|Aurelion]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-11",
+      "title": "Dominio de Drakonys",
+      "body": "**Kingdom** de tipo Hill.\n\nCapital: [[burg-30|Escama de Platino]].\n\nColor heráldico: `#c1121f`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Neutral\n- [[state-1|Sangrevasto]]: Neutral\n- [[state-2|Ceniza]]: Neutral\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Neutral\n- [[state-7|Solmarest]]: Neutral\n- [[state-8|Aurelion]]: Neutral\n- [[state-9|Lexford]]: Neutral\n- [[state-11|Drakonys]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "state-12",
+      "title": "Archipiélago Verde de Selvareth",
+      "body": "**Tribes** de tipo Generic.\n\nCapital: [[burg-32|Bosque Eterno]].\n\nColor heráldico: `#2d6a4f`.\n\n\n### Diplomacia\n- [[state-0|Neutrals]]: Neutral\n- [[state-1|Sangrevasto]]: Neutral\n- [[state-2|Ceniza]]: Neutral\n- [[state-3|Umbravalle]]: Neutral\n- [[state-4|Olvido]]: Neutral\n- [[state-5|Concordia]]: Neutral\n- [[state-6|Frontera]]: Neutral\n- [[state-7|Solmarest]]: Neutral\n- [[state-8|Aurelion]]: Neutral\n- [[state-9|Lexford]]: Neutral\n- [[state-10|Nimrael]]: Neutral\n\n\nVer también: [[world-valtherion|Valtherion]].",
+      "tags": [
+        "state",
+        "kingdom"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-1",
+      "title": "Cenizabrava",
+      "body": "**Capital.** Pertenece a [[state-1|Reino de Sangrevasto]]. Población relativa: 42. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-2",
+      "title": "Garrasangre",
+      "body": "**Asentamiento.** Pertenece a [[state-1|Reino de Sangrevasto]]. Población relativa: 18. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-3",
+      "title": "Mortisvalle",
+      "body": "**Asentamiento.** Pertenece a [[state-1|Reino de Sangrevasto]]. Población relativa: 12. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-4",
+      "title": "Hextorhold",
+      "body": "**Asentamiento.** Pertenece a [[state-1|Reino de Sangrevasto]]. Población relativa: 15. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-5",
+      "title": "Brassara",
+      "body": "**Capital.** Pertenece a [[state-2|Confederación de Señores de Ceniza]]. Población relativa: 28. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-6",
+      "title": "Rencorford",
+      "body": "**Asentamiento.** Pertenece a [[state-2|Confederación de Señores de Ceniza]]. Población relativa: 9. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-7",
+      "title": "Pira del Cuervo",
+      "body": "**Asentamiento.** Pertenece a [[state-2|Confederación de Señores de Ceniza]]. Población relativa: 7. Puerto activo. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-8",
+      "title": "Nigromar",
+      "body": "**Capital.** Pertenece a [[state-3|Dominio de Umbravalle]]. Población relativa: 22. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-9",
+      "title": "Sepulcris",
+      "body": "**Asentamiento.** Pertenece a [[state-3|Dominio de Umbravalle]]. Población relativa: 11. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-10",
+      "title": "Ruinas de Lumineth",
+      "body": "**Capital.** Pertenece a [[state-4|Tierras del Olvido]]. Población relativa: 8. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-11",
+      "title": "Campo de las Mil Espadas",
+      "body": "**Asentamiento.** Pertenece a [[state-4|Tierras del Olvido]]. Población relativa: 3. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-12",
+      "title": "Memoria Perdida",
+      "body": "**Asentamiento.** Pertenece a [[state-4|Tierras del Olvido]]. Población relativa: 5. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-13",
+      "title": "Mesas de la Paz",
+      "body": "**Capital.** Pertenece a [[state-5|República de Concordia]]. Población relativa: 31. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-14",
+      "title": "Puente de Hierro",
+      "body": "**Asentamiento.** Pertenece a [[state-5|República de Concordia]]. Población relativa: 14. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-15",
+      "title": "Villa del Mediador",
+      "body": "**Asentamiento.** Pertenece a [[state-5|República de Concordia]]. Población relativa: 10. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-16",
+      "title": "Vigilia del Alba",
+      "body": "**Capital.** Pertenece a [[state-6|Marca Fronteriza de Aurion]]. Población relativa: 19. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-17",
+      "title": "Torreón Gris",
+      "body": "**Asentamiento.** Pertenece a [[state-6|Marca Fronteriza de Aurion]]. Población relativa: 8. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-18",
+      "title": "Solmarest",
+      "body": "**Capital.** Pertenece a [[state-7|Imperio de Solmarest]]. Población relativa: 58. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-19",
+      "title": "Aureford",
+      "body": "**Asentamiento.** Pertenece a [[state-7|Imperio de Solmarest]]. Población relativa: 24. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-20",
+      "title": "Catedral de Pholtus",
+      "body": "**Asentamiento.** Pertenece a [[state-7|Imperio de Solmarest]]. Población relativa: 16. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-21",
+      "title": "Puerto Radiante",
+      "body": "**Asentamiento.** Pertenece a [[state-7|Imperio de Solmarest]]. Población relativa: 20. Puerto activo. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-22",
+      "title": "Heliopolis",
+      "body": "**Capital.** Pertenece a [[state-8|Reino de Aurelion]]. Población relativa: 45. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-23",
+      "title": "San Pelor",
+      "body": "**Asentamiento.** Pertenece a [[state-8|Reino de Aurelion]]. Población relativa: 22. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-24",
+      "title": "Valle Dorado",
+      "body": "**Asentamiento.** Pertenece a [[state-8|Reino de Aurelion]]. Población relativa: 13. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-25",
+      "title": "Lexford",
+      "body": "**Capital.** Pertenece a [[state-9|Ducado de Lexford]]. Población relativa: 38. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-26",
+      "title": "Heironea",
+      "body": "**Asentamiento.** Pertenece a [[state-9|Ducado de Lexford]]. Población relativa: 21. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-27",
+      "title": "Puerto del Juramento",
+      "body": "**Asentamiento.** Pertenece a [[state-9|Ducado de Lexford]]. Población relativa: 17. Puerto activo. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-28",
+      "title": "Alfheimar",
+      "body": "**Capital.** Pertenece a [[state-10|Santuario Élfico de Nimrael]]. Población relativa: 6. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-29",
+      "title": "Torre de Corellon",
+      "body": "**Asentamiento.** Pertenece a [[state-10|Santuario Élfico de Nimrael]]. Población relativa: 2. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-30",
+      "title": "Escama de Platino",
+      "body": "**Capital.** Pertenece a [[state-11|Dominio de Drakonys]]. Población relativa: 12. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-31",
+      "title": "Cueva del Concilio",
+      "body": "**Asentamiento.** Pertenece a [[state-11|Dominio de Drakonys]]. Población relativa: 4. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-32",
+      "title": "Bosque Eterno",
+      "body": "**Capital.** Pertenece a [[state-12|Archipiélago Verde de Selvareth]]. Población relativa: 9. Estructuras: ciudadela, murallas, templo, plaza.",
+      "tags": [
+        "burg",
+        "capital"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "burg-33",
+      "title": "Claro de Ehlonna",
+      "body": "**Asentamiento.** Pertenece a [[state-12|Archipiélago Verde de Selvareth]]. Población relativa: 5. Estructuras: templo.",
+      "tags": [
+        "burg",
+        "settlement"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "place-korthaven",
+      "title": "Korthaven",
+      "body": "Lugar notable de [[world-valtherion|Valtherion]]. Ampliar lore desde el editor DM.",
+      "tags": [
+        "place",
+        "stub"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "place-aurion",
+      "title": "Aurion",
+      "body": "Lugar notable de [[world-valtherion|Valtherion]]. Ampliar lore desde el editor DM.",
+      "tags": [
+        "place",
+        "stub"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "place-lexmara",
+      "title": "Lexmara",
+      "body": "Lugar notable de [[world-valtherion|Valtherion]]. Ampliar lore desde el editor DM.",
+      "tags": [
+        "place",
+        "stub"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "place-nimrael",
+      "title": "Nimrael",
+      "body": "Lugar notable de [[world-valtherion|Valtherion]]. Ampliar lore desde el editor DM.",
+      "tags": [
+        "place",
+        "stub"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "place-drakonys",
+      "title": "Drakonys",
+      "body": "Lugar notable de [[world-valtherion|Valtherion]]. Ampliar lore desde el editor DM.",
+      "tags": [
+        "place",
+        "stub"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "place-selvareth",
+      "title": "Selvareth",
+      "body": "Lugar notable de [[world-valtherion|Valtherion]]. Ampliar lore desde el editor DM.",
+      "tags": [
+        "place",
+        "stub"
+      ],
+      "dmOnly": false
+    },
+    {
+      "id": "place-mar-interior",
+      "title": "Mar Interior",
+      "body": "Lugar notable de [[world-valtherion|Valtherion]]. Ampliar lore desde el editor DM.",
+      "tags": [
+        "place",
+        "stub"
+      ],
+      "dmOnly": false
+    }
+  ],
+  "meta": {
+    "extractedAt": "2026-11-13T01:29:16.564Z",
+    "source": "roldninja/maps/Valtherion.json",
+    "azgaarVersion": "1.125.1",
+    "seed": "782946103",
+    "counts": {
+      "pins": 50,
+      "loreNodes": 69,
+      "states": 12,
+      "burgs": 33
+    }
+  }
+}

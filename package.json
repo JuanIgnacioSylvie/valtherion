@@ -1,0 +1,28 @@
+{
+  "name": "valtherion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Valtherion — atlas jugable y mesa de rol para un mundo propio (multi-sistema, D&D 2024 primero).",
+  "packageManager": "pnpm@11.8.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm db:generate && turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @valtherion/db generate",
+    "db:push": "pnpm --filter @valtherion/db push",
+    "db:seed": "pnpm --filter @valtherion/db seed",
+    "world:extract": "node scripts/extract-valtherion-seed.mjs",
+    "setup": "pnpm install && pnpm world:extract && pnpm db:up && pnpm db:generate && pnpm db:push && pnpm db:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "turbo": "^2.5.4",
+    "typescript": "^5.7.3"
+  }
+}
