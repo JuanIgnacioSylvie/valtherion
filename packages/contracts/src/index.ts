@@ -49,13 +49,27 @@ export interface MapSceneDto {
   y: number;
   width: number;
   height: number;
-  mapImage: string;
+  /** Placeholder raster (opcional si hay settlementId). */
+  mapImage?: string | null;
+  /**
+   * Asentamiento vectorial (LOD 2–3). URL a SettlementDto JSON.
+   * Si está, el atlas dibuja edificios/calles desde datos (sin pixelar).
+   */
+  settlementUrl?: string | null;
   /** Zoom relativo (1 = mapamundi) a partir del cual se muestra. */
   minZoomRelative: number;
   maxZoomRelative: number;
   pinId?: string | null;
   loreNodeId?: string | null;
 }
+
+export type {
+  SettlementDto,
+  SettlementBuildingDto,
+  SettlementPathDto,
+  SettlementPolyDto,
+} from "./settlement";
+export type { SettlementDto as Settlement } from "./settlement";
 
 export interface WorldBundleDto {
   world: WorldDto;

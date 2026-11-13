@@ -24,8 +24,8 @@ El atlas es un **lienzo continuo en coords del mundo**, pero el contenido visibl
 1. [x] Mundi raster + pins; zoom mínimo = fit mundi.
 2. [x] **Demo escenas ancladas:** `Cenizabrava` — zoom nativo (llena viewport); tope anti-pixel.
 2b. [x] **Geografía lore Valtherion** (tripartito); Zytzayna descartado.
-3. [ ] **Tiles mundi:** cortar el mundi en pirámide (512px) para pan suave a LOD0–1.
-4. [ ] Más ciudades ancladas + fade según viewport.
+3. [x] **Tiles mundi on-demand:** pirámide 512px rasterizada en GPU (`WorldTileLayer`).
+4. [x] **Cenizabrava vectorial** (`settlementUrl`); más ciudades ancladas pendientes.
 5. [ ] **Pisos:** `Building { floors: [{z, image, roofImage}] }` + UI “quitar techos” / subir-bajar nivel (como Zomboid: Shift+scroll).
 6. [ ] **Autoría:** editor DM coloca escenas/edificios sobre el mundi.
 
@@ -64,9 +64,9 @@ Inspeccionado `projectzomboidmap.com` con el navegador:
 
 | Capa | Técnica | Estado |
 |------|---------|--------|
-| Mundi (LOD 0–2) | **Renderer procedural en GPU** (`apps/web/src/lib/terrain`): por cada pixel de pantalla evalúa el mundo (continentes del lore + ruido fractal con LOD por tamaño de píxel, hillshade, árboles y montañas como estampas). Resolución infinita, 0 bytes de tiles. Zoom hasta 4800%. | ✅ |
-| Ciudades (LOD 3) | Renderer **desde datos** (edificios, calles, techos) — mismo principio que pzmap2d; o pirámide DZI horneada por ciudad | ⏳ siguiente |
+| Mundi (LOD 0–1) | **Pirámide de tiles on-demand** (`WorldTileLayer` + `TileRasterizer`): cada nivel se rasteriza a 512² con el shader (paint D&D a zoom bajo, detalle procedural a zoom alto). No se estira el JPG. | ✅ |
+| Ciudades (LOD 2–3) | **Cenizabrava vectorial** (`settlements/cenizabrava.json` + `SettlementRenderer`): edificios/calles/muros desde datos → zoom sin pixelar | ✅ |
 | Interiores / pisos | Datos `Building.floors[]` + render por piso, techos on/off | ⏳ |
-| Escenas-imagen (Cenizabrava) | Solo como placeholder; tope de zoom a su resolución nativa | demo |
+| Escenas-imagen | Deprecated para ciudades; solo fallback si no hay `settlementUrl` | legado |
 
 Geografía (coordenadas en unidades de mundo 1920×911) vive en `terrainShader.ts` (constantes `C_*`/`R_*`) y debe coincidir con `scripts/rebuild-valtherion-geo-seed.mjs` (`GEO`).

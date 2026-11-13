@@ -96,8 +96,8 @@ export function SideRail() {
               </p>
             )}
             <p className="text-xs text-mist/80">
-              Mundi estilo atlas D&D (pintado + detalle GPU al zoomear). Ciudades/interiores: capas LOD (ver{" "}
-              <code className="text-brass/80">docs/MAP-LODS.md</code>).
+              Mundi: tiles GPU on-demand. Ciudades: datos vectoriales (Cenizabrava). Ver{" "}
+              <code className="text-brass/80">docs/MAP-LODS.md</code>.
             </p>
             <div>
               <h3 className="mb-2 font-display text-brass">Escenas HD (LOD)</h3>

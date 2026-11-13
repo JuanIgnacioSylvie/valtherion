@@ -1033,7 +1033,7 @@
     },
     "geography": "lore-valtherion-tripartite-v2",
     "note": "Zytzayna descartado; layout según texto del mundo tripartito.",
-    "updatedAt": "2026-11-13T22:23:15.100Z"
+    "updatedAt": "2026-11-13T22:42:04.098Z"
   },
   "scenes": [
     {
@@ -1044,9 +1044,10 @@
       "y": 480,
       "width": 220,
       "height": 220,
-      "mapImage": "/worlds/valtherion/scenes/cenizabrava.jpg",
+      "mapImage": null,
+      "settlementUrl": "/worlds/valtherion/settlements/cenizabrava.json",
       "minZoomRelative": 3,
-      "maxZoomRelative": 48,
+      "maxZoomRelative": 120,
       "pinId": "pin-burg-1",
       "loreNodeId": "burg-1"
     }

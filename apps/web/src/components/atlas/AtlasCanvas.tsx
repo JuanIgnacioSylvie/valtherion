@@ -12,15 +12,19 @@ import {
   TextStyle,
   FederatedPointerEvent,
 } from "pixi.js";
-import type { MapSceneDto, PinDto } from "@valtherion/contracts";
+import type { MapSceneDto, PinDto, SettlementDto } from "@valtherion/contracts";
 import { visiblePinsForZoom } from "@valtherion/domain";
 import { useAtlasStore } from "@/store/atlasStore";
 import { TerrainRenderer } from "@/lib/terrain/TerrainRenderer";
+import { WorldTileLayer } from "@/lib/tiles/WorldTileLayer";
+import { buildSettlementView } from "@/lib/settlement/SettlementRenderer";
 
-/** Zoom relativo máximo del mundi procedural (detalle infinito; el límite es de escala/UX). */
-const ZOOM_REL_MAX_WORLD = 48;
-/** Holgura sobre el zoom “nativo” de una escena-imagen (1 = llena el viewport). */
+/** Zoom relativo máximo del mundi (tiles on-demand). */
+const ZOOM_REL_MAX_WORLD = 64;
+/** Tope sobre escena raster (sin settlement vectorial). */
 const SCENE_ZOOM_SLACK = 1.15;
+/** Asentamiento vectorial: zoom profundo sin pixelar. */
+const SETTLEMENT_ZOOM_REL_MAX = 120;
 
 const PIN_COLORS: Record<string, number> = {
   kingdom: 0xc4a35a,
@@ -71,10 +75,12 @@ export function AtlasCanvas() {
     let cancelled = false;
     let app: Application | null = null;
     let terrain: TerrainRenderer | null = null;
+    let tileLayer: WorldTileLayer | null = null;
     let cleanupListeners: (() => void) | null = null;
 
     const worldW = world.width;
     const worldH = world.height;
+    const paintUrl = `/worlds/valtherion/map-dnd-v4.jpg?v=1`;
     const { setZoom, openLore, selectPin, setActiveSceneIds, requestFocusScene } =
       useAtlasStore.getState();
 
@@ -96,7 +102,7 @@ export function AtlasCanvas() {
 
       app = instance;
 
-      // Capa 0: mundi procedural en GPU (detalle infinito). Capa 1: Pixi (pins, escenas, grilla).
+      // Capa GL fullscreen (preview inmediato) + tiles Pixi (pirámide nítida).
       terrain = TerrainRenderer.create();
       const layers: HTMLElement[] = [];
       if (terrain) {
@@ -112,8 +118,12 @@ export function AtlasCanvas() {
       host.replaceChildren(...layers);
       terrain?.resize(Math.max(host.clientWidth, 1), Math.max(host.clientHeight, 1));
       terrain?.setWorldSize(worldW, worldH);
-      if (terrain) {
-        await terrain.loadPaint(`/worlds/valtherion/map-dnd-v4.jpg?v=1`);
+      if (terrain) await terrain.loadPaint(paintUrl);
+
+      tileLayer = await WorldTileLayer.create(worldW, worldH, paintUrl);
+      if (cancelled) {
+        tileLayer?.destroy();
+        return;
       }
 
       const stage = new Container();
@@ -126,11 +136,11 @@ export function AtlasCanvas() {
       const gridLayer = new Graphics();
       const pinsLayer = new Container();
       stage.addChild(mapLayer, scenesLayer, gridLayer, pinsLayer);
+      if (tileLayer) mapLayer.addChild(tileLayer.root);
 
-      // Fallback sin WebGL2: imagen estática (se pixela al hacer zoom).
-      if (!terrain) {
+      if (!terrain && !tileLayer) {
         try {
-          const texture = await Assets.load(`${world.mapImage}?v=biomes2`);
+          const texture = await Assets.load(`${world.mapImage}?v=dnd4`);
           if (cancelled) return;
           const sprite = new Sprite(texture);
           sprite.width = worldW;
@@ -152,11 +162,22 @@ export function AtlasCanvas() {
 
       let fitZoom = 1;
       let zoom = 1;
-      const sceneSprites = new Map<string, Sprite>();
+      const sceneNodes = new Map<string, Container>();
+      const sceneIsVector = new Map<string, boolean>();
       const sceneLoading = new Set<string>();
 
       function syncTerrain() {
         terrain?.schedule(stage.position.x, stage.position.y, zoom);
+      }
+
+      function syncTiles() {
+        if (!app || !tileLayer) return;
+        tileLayer.sync(stage.position.x, stage.position.y, zoom, app.screen.width, app.screen.height);
+        // A zoom medio/alto los tiles cubren; atenuar el fullscreen para no pelear.
+        if (terrain) {
+          const zRel = zoomRelative();
+          terrain.canvas.style.opacity = zRel >= 2.2 ? "0" : zRel >= 1.4 ? "0.45" : "1";
+        }
       }
 
       function zoomRelative() {
@@ -181,13 +202,13 @@ export function AtlasCanvas() {
         pinsLayer.removeChildren();
         const zRel = zoomRelative();
         const visible = visiblePinsForZoom(pinsRef.current, zRel).filter((p) => {
-          // Ocultar pin de ciudad si su escena HD ya está activa encima.
           const covered = scenesRef.current.some(
             (s) =>
               s.pinId === p.id &&
               zRel >= s.minZoomRelative &&
               zRel <= s.maxZoomRelative &&
-              sceneSprites.has(s.id),
+              sceneNodes.has(s.id) &&
+              (sceneNodes.get(s.id)?.visible ?? false),
           );
           return !covered;
         });
@@ -210,42 +231,60 @@ export function AtlasCanvas() {
 
         for (const scene of scenesRef.current) {
           const shouldShow = zRel >= scene.minZoomRelative && zRel <= scene.maxZoomRelative;
-          let sprite = sceneSprites.get(scene.id);
+          let node = sceneNodes.get(scene.id);
 
           if (shouldShow) {
             active.push(scene.id);
-            if (!sprite && !sceneLoading.has(scene.id)) {
+            if (!node && !sceneLoading.has(scene.id)) {
               sceneLoading.add(scene.id);
               try {
-                const texture = await Assets.load(`${scene.mapImage}?v=2`);
-                if (cancelled) return;
-                sprite = new Sprite(texture);
-                sprite.x = scene.x;
-                sprite.y = scene.y;
-                sprite.width = scene.width;
-                sprite.height = scene.height;
-                sprite.alpha = 0;
-                scenesLayer.addChild(sprite);
-                sceneSprites.set(scene.id, sprite);
+                if (scene.settlementUrl) {
+                  const res = await fetch(scene.settlementUrl);
+                  const data = (await res.json()) as SettlementDto;
+                  if (cancelled) return;
+                  node = buildSettlementView(data);
+                  node.x = scene.x;
+                  node.y = scene.y;
+                  node.scale.set(scene.width / data.width, scene.height / data.height);
+                  scenesLayer.addChild(node);
+                  sceneNodes.set(scene.id, node);
+                  sceneIsVector.set(scene.id, true);
+                } else if (scene.mapImage) {
+                  const texture = await Assets.load(`${scene.mapImage}?v=2`);
+                  if (cancelled) return;
+                  const sprite = new Sprite(texture);
+                  sprite.x = scene.x;
+                  sprite.y = scene.y;
+                  sprite.width = scene.width;
+                  sprite.height = scene.height;
+                  scenesLayer.addChild(sprite);
+                  sceneNodes.set(scene.id, sprite);
+                  sceneIsVector.set(scene.id, false);
+                  node = sprite;
+                }
               } catch (err) {
                 console.error("Scene load failed", scene.id, err);
               } finally {
                 sceneLoading.delete(scene.id);
               }
             }
-            sprite = sceneSprites.get(scene.id);
-            if (sprite) {
-              sprite.alpha = 1;
-              sprite.visible = true;
-            }
-          } else if (sprite) {
-            sprite.visible = false;
-            sprite.alpha = 0;
+            node = sceneNodes.get(scene.id);
+            if (node) node.visible = true;
+          } else if (node) {
+            node.visible = false;
           }
         }
 
         setActiveSceneIds(active);
         redrawPins();
+      }
+
+      function cameraChanged() {
+        setZoom(zoom, fitZoom);
+        syncTerrain();
+        syncTiles();
+        void syncScenes();
+        redrawGrid();
       }
 
       function fitToWorld() {
@@ -259,13 +298,9 @@ export function AtlasCanvas() {
           (app.screen.width - worldW * zoom) / 2,
           (app.screen.height - worldH * zoom) / 2,
         );
-        setZoom(zoom, fitZoom);
-        syncTerrain();
-        void syncScenes();
-        redrawGrid();
+        cameraChanged();
       }
 
-      /** Zoom absoluto donde la escena llena ~92% del lado menor del viewport. */
       function nativeSceneZoom(scene: MapSceneDto) {
         if (!app) return fitZoom;
         const zx = (app.screen.width * 0.92) / scene.width;
@@ -273,7 +308,6 @@ export function AtlasCanvas() {
         return Math.min(zx, zy);
       }
 
-      /** Tope de zoom bajo el cursor: el mundi es infinito; una escena-imagen no se estira. */
       function maxZoomAt(wx: number, wy: number) {
         const zRel = zoomRelative();
         const under = scenesRef.current.filter(
@@ -286,7 +320,14 @@ export function AtlasCanvas() {
             wy <= s.y + s.height,
         );
         if (under.length === 0) return fitZoom * ZOOM_REL_MAX_WORLD;
-        return Math.max(...under.map((s) => nativeSceneZoom(s) * SCENE_ZOOM_SLACK));
+        // Vectorial: sin techo de textura. Raster: nativo * slack.
+        return Math.max(
+          ...under.map((s) =>
+            s.settlementUrl || sceneIsVector.get(s.id)
+              ? fitZoom * SETTLEMENT_ZOOM_REL_MAX
+              : nativeSceneZoom(s) * SCENE_ZOOM_SLACK,
+          ),
+        );
       }
 
       function focusScene(scene: MapSceneDto) {
@@ -296,10 +337,7 @@ export function AtlasCanvas() {
         const cx = scene.x + scene.width / 2;
         const cy = scene.y + scene.height / 2;
         stage.position.set(app.screen.width / 2 - cx * zoom, app.screen.height / 2 - cy * zoom);
-        setZoom(zoom, fitZoom);
-        syncTerrain();
-        void syncScenes();
-        redrawGrid();
+        cameraChanged();
       }
 
       fitToWorld();
@@ -326,6 +364,7 @@ export function AtlasCanvas() {
         lastX = e.global.x;
         lastY = e.global.y;
         syncTerrain();
+        syncTiles();
       });
 
       const onWheel = (ev: WheelEvent) => {
@@ -344,10 +383,7 @@ export function AtlasCanvas() {
         zoom = next;
         stage.scale.set(zoom);
         stage.position.set(mx - wx * zoom, my - wy * zoom);
-        setZoom(zoom, fitZoom);
-        syncTerrain();
-        void syncScenes();
-        redrawGrid();
+        cameraChanged();
       };
       app.canvas.addEventListener("wheel", onWheel, { passive: false });
 
@@ -360,9 +396,7 @@ export function AtlasCanvas() {
         if (Math.abs(zoomRelative() - 1) < 0.05) {
           fitToWorld();
         } else {
-          syncTerrain();
-          void syncScenes();
-          redrawGrid();
+          cameraChanged();
         }
       });
       ro.observe(host);
@@ -395,6 +429,8 @@ export function AtlasCanvas() {
     return () => {
       cancelled = true;
       cleanupListeners?.();
+      tileLayer?.destroy();
+      tileLayer = null;
       safeDestroyApp(app);
       app = null;
       terrain?.destroy();

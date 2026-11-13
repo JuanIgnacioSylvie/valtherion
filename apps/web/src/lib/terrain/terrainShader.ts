@@ -376,9 +376,15 @@ void main() {
       // espuma en agua junto a costa
       detailed = mix(detailed, mix(paint, vec3(0.78, 0.86, 0.84), 0.5), inkCoast * (1.0 - landHint) * 0.35);
 
-      // A zoom bajo: paint puro. A zoom alto: paint + detalle (nunca océano procedural vacío).
-      float keepPaint = 1.0; // el arte D&D manda siempre
-      col = mix(col, mix(paint, detailed, detailAmt), keepPaint);
+      // Zoom bajo → paint D&D. Zoom alto → procedural nítido (tiles), tintado con el paint.
+      // Nunca se queda mostrando el JPG estirado (eso es lo que pixelaba).
+      float paintAmt = smoothstep(5.5, 1.4, uZoom);
+      vec3 paintLook = mix(paint, detailed, detailAmt);
+      // Procedural ya esta en col; lo tine levemente con el paint para no romper el estilo.
+      vec3 crisp = mix(col, paintLook, 0.22);
+      // En tierra del paint, preferir silueta del cuadro a zoom medio.
+      crisp = mix(crisp, mix(col, paintLook, 0.55), landHint * (1.0 - paintAmt) * 0.35);
+      col = mix(crisp, paintLook, paintAmt);
     }
     }
   }
