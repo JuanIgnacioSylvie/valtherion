@@ -15,15 +15,11 @@ import {
 import type { MapSceneDto, PinDto, SettlementDto } from "@valtherion/contracts";
 import { visiblePinsForZoom } from "@valtherion/domain";
 import { useAtlasStore } from "@/store/atlasStore";
-import { TerrainRenderer } from "@/lib/terrain/TerrainRenderer";
 import { WorldTileLayer } from "@/lib/tiles/WorldTileLayer";
 import { buildSettlementView } from "@/lib/settlement/SettlementRenderer";
 
-/** Zoom relativo máximo del mundi (tiles on-demand). */
-const ZOOM_REL_MAX_WORLD = 64;
-/** Tope sobre escena raster (sin settlement vectorial). */
+/** Ciudades (settlement data): zoom propio. Mundi = techo del manifest de tiles. */
 const SCENE_ZOOM_SLACK = 1.15;
-/** Asentamiento vectorial: zoom profundo sin pixelar. */
 const SETTLEMENT_ZOOM_REL_MAX = 120;
 
 const PIN_COLORS: Record<string, number> = {
@@ -74,20 +70,18 @@ export function AtlasCanvas() {
     const host = hostRef.current;
     let cancelled = false;
     let app: Application | null = null;
-    let terrain: TerrainRenderer | null = null;
     let tileLayer: WorldTileLayer | null = null;
     let cleanupListeners: (() => void) | null = null;
 
     const worldW = world.width;
     const worldH = world.height;
-    const paintUrl = `/worlds/valtherion/map-dnd-v4.jpg?v=1`;
     const { setZoom, openLore, selectPin, setActiveSceneIds, requestFocusScene } =
       useAtlasStore.getState();
 
     (async () => {
       const instance = new Application();
       await instance.init({
-        backgroundAlpha: 0,
+        background: 0x1a2438,
         width: Math.max(host.clientWidth, 1),
         height: Math.max(host.clientHeight, 1),
         antialias: true,
@@ -101,30 +95,18 @@ export function AtlasCanvas() {
       }
 
       app = instance;
+      host.replaceChildren(app.canvas);
 
-      // Capa GL fullscreen (preview inmediato) + tiles Pixi (pirámide nítida).
-      terrain = TerrainRenderer.create();
-      const layers: HTMLElement[] = [];
-      if (terrain) {
-        terrain.canvas.style.position = "absolute";
-        terrain.canvas.style.left = "0";
-        terrain.canvas.style.top = "0";
-        layers.push(terrain.canvas);
-      }
-      app.canvas.style.position = "absolute";
-      app.canvas.style.left = "0";
-      app.canvas.style.top = "0";
-      layers.push(app.canvas);
-      host.replaceChildren(...layers);
-      terrain?.resize(Math.max(host.clientWidth, 1), Math.max(host.clientHeight, 1));
-      terrain?.setWorldSize(worldW, worldH);
-      if (terrain) await terrain.loadPaint(paintUrl);
-
-      tileLayer = await WorldTileLayer.create(worldW, worldH, paintUrl);
+      // ÚNICO sistema mundi: pirámide estática (pnpm map:build). Sin JPG fallback.
+      tileLayer = await WorldTileLayer.create(worldW, worldH);
       if (cancelled) {
         tileLayer?.destroy();
         return;
       }
+      if (!tileLayer) {
+        console.error("Atlas requiere pirámide de tiles. Corré: pnpm map:build");
+      }
+      const mundiNativeZoom = tileLayer?.nativeZoom ?? 0.67;
 
       const stage = new Container();
       stage.eventMode = "static";
@@ -136,20 +118,11 @@ export function AtlasCanvas() {
       const gridLayer = new Graphics();
       const pinsLayer = new Container();
       stage.addChild(mapLayer, scenesLayer, gridLayer, pinsLayer);
-      if (tileLayer) mapLayer.addChild(tileLayer.root);
 
-      if (!terrain && !tileLayer) {
-        try {
-          const texture = await Assets.load(`${world.mapImage}?v=dnd4`);
-          if (cancelled) return;
-          const sprite = new Sprite(texture);
-          sprite.width = worldW;
-          sprite.height = worldH;
-          mapLayer.addChild(sprite);
-        } catch {
-          if (cancelled) return;
-          mapLayer.addChild(new Graphics().rect(0, 0, worldW, worldH).fill(0x1a2744));
-        }
+      if (tileLayer) {
+        mapLayer.addChild(tileLayer.root);
+      } else {
+        mapLayer.addChild(new Graphics().rect(0, 0, worldW, worldH).fill(0x1a2744));
       }
 
       const labelStyle = new TextStyle({
@@ -166,25 +139,13 @@ export function AtlasCanvas() {
       const sceneIsVector = new Map<string, boolean>();
       const sceneLoading = new Set<string>();
 
-      function syncTerrain() {
-        terrain?.schedule(stage.position.x, stage.position.y, zoom);
+      function zoomRelative() {
+        return fitZoom > 0 ? zoom / fitZoom : 1;
       }
 
       function syncTiles() {
         if (!app || !tileLayer) return;
         tileLayer.sync(stage.position.x, stage.position.y, zoom, app.screen.width, app.screen.height);
-        // Terrain de fondo hasta que el nivel actual tenga tiles (si no: huecos o tiles viejos estirados).
-        if (terrain) {
-          const zRel = zoomRelative();
-          const covered = tileLayer.coverage >= 0.7;
-          if (zRel < 1.3) terrain.canvas.style.opacity = "1";
-          else if (!covered) terrain.canvas.style.opacity = "1";
-          else terrain.canvas.style.opacity = "0";
-        }
-      }
-
-      function zoomRelative() {
-        return fitZoom > 0 ? zoom / fitZoom : 1;
       }
 
       function redrawGrid() {
@@ -192,12 +153,8 @@ export function AtlasCanvas() {
         if (!showGridRef.current || zoomRelative() < 8) return;
         const step = 40;
         gridLayer.setStrokeStyle({ width: 1 / zoom, color: 0xffffff, alpha: 0.12 });
-        for (let x = 0; x <= worldW; x += step) {
-          gridLayer.moveTo(x, 0).lineTo(x, worldH);
-        }
-        for (let y = 0; y <= worldH; y += step) {
-          gridLayer.moveTo(0, y).lineTo(worldW, y);
-        }
+        for (let x = 0; x <= worldW; x += step) gridLayer.moveTo(x, 0).lineTo(x, worldH);
+        for (let y = 0; y <= worldH; y += step) gridLayer.moveTo(0, y).lineTo(worldW, y);
         gridLayer.stroke();
       }
 
@@ -255,8 +212,10 @@ export function AtlasCanvas() {
         const active: string[] = [];
 
         for (const scene of scenesRef.current) {
-          const inZoom = zRel >= scene.minZoomRelative && zRel <= scene.maxZoomRelative;
-          const shouldShow = inZoom && sceneInView(scene);
+          const shouldShow =
+            zRel >= scene.minZoomRelative &&
+            zRel <= scene.maxZoomRelative &&
+            sceneInView(scene);
           let node = sceneNodes.get(scene.id);
 
           if (shouldShow) {
@@ -264,7 +223,9 @@ export function AtlasCanvas() {
             if (!node && !sceneLoading.has(scene.id)) {
               sceneLoading.add(scene.id);
               try {
-                if (scene.settlementUrl) {
+                // Con pirámide DZI del master HD, la ciudad ya está en los tiles.
+                // No montar overlay vectorial encima (mezclaría sistemas).
+                if (scene.settlementUrl && !tileLayer) {
                   const res = await fetch(scene.settlementUrl);
                   const data = (await res.json()) as SettlementDto;
                   if (cancelled) return;
@@ -275,7 +236,7 @@ export function AtlasCanvas() {
                   scenesLayer.addChild(node);
                   sceneNodes.set(scene.id, node);
                   sceneIsVector.set(scene.id, true);
-                } else if (scene.mapImage) {
+                } else if (scene.mapImage && !tileLayer) {
                   const texture = await Assets.load(`${scene.mapImage}?v=2`);
                   if (cancelled) return;
                   const sprite = new Sprite(texture);
@@ -305,11 +266,14 @@ export function AtlasCanvas() {
         redrawPins();
       }
 
-      function cameraChanged() {
-        setZoom(zoom, fitZoom);
-        syncTerrain();
+      let resizeBusy = false;
+      function cameraChanged(opts?: { fromResize?: boolean }) {
+        const st = useAtlasStore.getState();
+        if (st.zoom !== zoom || st.fitZoom !== fitZoom) {
+          setZoom(zoom, fitZoom);
+        }
         syncTiles();
-        void syncScenes();
+        if (!opts?.fromResize) void syncScenes();
         redrawGrid();
       }
 
@@ -317,7 +281,8 @@ export function AtlasCanvas() {
         if (!app) return;
         const sx = app.screen.width / worldW;
         const sy = app.screen.height / worldH;
-        fitZoom = Math.min(sx, sy);
+        // Mapamundi nítido: no upscalear el paint (letterbox en pantallas grandes).
+        fitZoom = Math.min(sx, sy, mundiNativeZoom);
         zoom = fitZoom;
         stage.scale.set(zoom);
         stage.position.set(
@@ -345,9 +310,12 @@ export function AtlasCanvas() {
             wy >= s.y &&
             wy <= s.y + s.height,
         );
-        if (under.length === 0) return fitZoom * ZOOM_REL_MAX_WORLD;
-        // Vectorial: sin techo de textura. Raster: nativo * slack.
+        // Con DZI master, el techo es nativeZoom en todo el mundi (ciudad incluida).
+        if (tileLayer) return mundiNativeZoom;
+        const mundiCap = mundiNativeZoom;
+        if (under.length === 0) return mundiCap;
         return Math.max(
+          mundiCap,
           ...under.map((s) =>
             s.settlementUrl || sceneIsVector.get(s.id)
               ? fitZoom * SETTLEMENT_ZOOM_REL_MAX
@@ -358,7 +326,9 @@ export function AtlasCanvas() {
 
       function focusScene(scene: MapSceneDto) {
         if (!app) return;
-        zoom = nativeSceneZoom(scene);
+        // Más definición: no solo “llenar pantalla”, acercar hacia 1:1 del master.
+        const fitCity = nativeSceneZoom(scene);
+        zoom = Math.min(mundiNativeZoom, Math.max(fitCity, fitCity * 2.4));
         stage.scale.set(zoom);
         const cx = scene.x + scene.width / 2;
         const cy = scene.y + scene.height / 2;
@@ -389,7 +359,6 @@ export function AtlasCanvas() {
         stage.position.y += e.global.y - lastY;
         lastX = e.global.x;
         lastY = e.global.y;
-        syncTerrain();
         syncTiles();
       });
 
@@ -414,15 +383,17 @@ export function AtlasCanvas() {
       app.canvas.addEventListener("wheel", onWheel, { passive: false });
 
       const ro = new ResizeObserver(() => {
-        if (!app || cancelled) return;
-        const w = Math.max(host.clientWidth, 1);
-        const h = Math.max(host.clientHeight, 1);
-        app.renderer.resize(w, h);
-        terrain?.resize(w, h);
-        if (Math.abs(zoomRelative() - 1) < 0.05) {
-          fitToWorld();
-        } else {
-          cameraChanged();
+        if (!app || cancelled || resizeBusy) return;
+        resizeBusy = true;
+        try {
+          const w = Math.max(host.clientWidth, 1);
+          const h = Math.max(host.clientHeight, 1);
+          if (w === app.screen.width && h === app.screen.height) return;
+          app.renderer.resize(w, h);
+          if (Math.abs(zoomRelative() - 1) < 0.05) fitToWorld();
+          else cameraChanged({ fromResize: true });
+        } finally {
+          resizeBusy = false;
         }
       });
       ro.observe(host);
@@ -459,13 +430,11 @@ export function AtlasCanvas() {
       tileLayer = null;
       safeDestroyApp(app);
       app = null;
-      terrain?.destroy();
-      terrain = null;
       host.replaceChildren();
     };
   }, [world]);
 
-  return <div ref={hostRef} className="absolute inset-0 touch-none" />;
+  return <div ref={hostRef} className="absolute inset-0 touch-none bg-[#1a2438]" />;
 }
 
 function makePin(

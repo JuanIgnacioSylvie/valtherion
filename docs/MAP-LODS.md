@@ -1,72 +1,30 @@
-# Mapa multi-nivel (visión tipo Project Zomboid)
+# Mapa (modelo Project Zomboid / DZI)
 
-## El problema
+## Una sola regla
 
-Una sola imagen (aunque sea 4K/8K) **siempre** pixeliza si zoomeás lo suficiente como para ver techos de casas.  
-[Project Zomboid Map](https://projectzomboidmap.com/) no estira un JPG: cambia de **capa de detalle** (tiles + pisos).
+Una fuente → bake → pirámide `{z}/{x}_{y}` → el viewer solo carga tiles.
 
-## Arquitectura Valtherion
+```bash
+pnpm map:build   # compose master HD + tiles:build
+```
 
-El atlas es un **lienzo continuo en coords del mundo**, pero el contenido visible cambia por **LOD (level of detail)**:
+| | |
+|--|--|
+| Master | `map-master.jpg` (~15k×7k) = paint + parches HD |
+| Parches | Korthaven ashlands, Selvareth, Cenizabrava (refs D&D) |
+| Tiles | DZI 512 WebP, niveles 0…maxLevel |
+| Zoom mundi | hasta `nativeZoom` (1 px ≈ 1 px del master) |
 
-| LOD | Zoom relativo* | Qué se ve | Assets |
-|-----|----------------|-----------|--------|
-| 0 Mundi | 1× (encuadre completo) | biomas, costas, montañas | 1 mapa mundi HD / tiles mundi |
-| 1 Región | ~2–6× | bosques/ríos nítidos, siluetas de asentamientos | tiles regionales o overlays |
-| 2 Asentamiento | ~8–25× | ciudad/pueblo con techos definidos | mapa de ciudad anclado a bbox (refs Sondawoode/Brindol) |
-| 3 Calle / táctico | ~30–80× | calles, edificios, grilla | battle map / district tiles |
-| 4 Interior | “entrar” + piso | planta del edificio, techos off | floor plans por nivel (Z0, Z1…) |
+## Arte
 
-\*Zoom relativo `1` = mundi entero en pantalla (no se puede salir más afuera).
+Generado desde `content/art-refs/dnd-style/*` → `content/art-refs/generated/*` → compose.
 
-## Cómo se implementa (fases)
+| Asset | Rol |
+|-------|-----|
+| `map-dnd-v4.jpg` | Base geográfica (pins/GEO) |
+| `*-hd.jpg` | Detalle regional / ciudad |
+| `map-master.jpg` | Fuente única del bake |
 
-1. [x] Mundi raster + pins; zoom mínimo = fit mundi.
-2. [x] **Demo escenas ancladas:** `Cenizabrava` — zoom nativo (llena viewport); tope anti-pixel.
-2b. [x] **Geografía lore Valtherion** (tripartito); Zytzayna descartado.
-3. [x] **Tiles mundi on-demand:** pirámide 512px rasterizada en GPU (`WorldTileLayer`).
-4. [x] **Cenizabrava vectorial** (`settlementUrl`); más ciudades ancladas pendientes.
-5. [ ] **Pisos:** `Building { floors: [{z, image, roofImage}] }` + UI “quitar techos” / subir-bajar nivel (como Zomboid: Shift+scroll).
-6. [ ] **Autoría:** editor DM coloca escenas/edificios sobre el mundi.
+## Ciudades
 
-### Probar la demo
-
-1. Abrí el atlas.
-2. En **Capas → Escenas HD**, clic en **Cenizabrava** (o zoomeá el oeste del mapa ≥450%).
-3. Debería aparecer el badge `LOD ciudad: scene-cenizabrava` y el mapa de techos.
-
-## Qué NO hacer
-
-- Una imagen de 100000×50000 del planeta entero (impensable de generar, servir y pintar).
-- Estirar el JPG actual a zoom 50× esperando ver casas.
-
-## Relación con el arte
-
-- Refs de **atlas** → LOD 0–1  
-- Refs de **ciudad/pueblo** → LOD 2  
-- Refs de **battle map / interior** → LOD 3–4  
-
-El mundi vacío de biomas es solo LOD 0.
-
-## Análisis de Project Zomboid Map (verificado por red, nov 2026)
-
-Inspeccionado `projectzomboidmap.com` con el navegador:
-
-- Formato **Deep Zoom Image (DZI)**: `https://tiles.projectzomboidmap.com/maps/<build>/base/layer0.dzi` + `layer0_files/{nivel}/{x}_{y}.jpg`.
-- **Tile 1024×1024 px**, JPG, sin overlap. Niveles 10–18+ visibles al navegar.
-- Imagen completa: **2.314.368 × 1.019.040 px (~2,36 gigapíxeles)**.
-- Pie de página: *"Rendered with pzmap2d"* → los tiles se **renderizan desde los datos del juego** (tiles de terreno/edificios reales a escala nativa), por piso (`layer0`, `layer1`, …). No es una foto estirada.
-- Viewer propio (bundle `index-*.js`, 5 canvas), deep links `#XxYxZoom`, pisos con `,`/`.` o Shift+scroll.
-
-**Conclusión:** el zoom profundo viene de tener **datos + renderer**, no de una imagen. Una ilustración IA (~1–2 MP) jamás da ese detalle.
-
-## Cómo lo aplicamos en Valtherion
-
-| Capa | Técnica | Estado |
-|------|---------|--------|
-| Mundi (LOD 0–1) | **Pirámide de tiles on-demand** (`WorldTileLayer` + `TileRasterizer`): cada nivel se rasteriza a 512² con el shader (paint D&D a zoom bajo, detalle procedural a zoom alto). No se estira el JPG. | ✅ |
-| Ciudades (LOD 2–3) | **Cenizabrava vectorial** (`settlements/cenizabrava.json` + `SettlementRenderer`): edificios/calles/muros desde datos → zoom sin pixelar | ✅ |
-| Interiores / pisos | Datos `Building.floors[]` + render por piso, techos on/off | ⏳ |
-| Escenas-imagen | Deprecated para ciudades; solo fallback si no hay `settlementUrl` | legado |
-
-Geografía (coordenadas en unidades de mundo 1920×911) vive en `terrainShader.ts` (constantes `C_*`/`R_*`) y debe coincidir con `scripts/rebuild-valtherion-geo-seed.mjs` (`GEO`).
+Cenizabrava está **en el master** (mismo DZI). El overlay vectorial sigue para interacción; no es un segundo mundi.

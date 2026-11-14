@@ -1,8 +1,9 @@
-/** Pirámide tipo slippy-map sobre el mundi (coords de mundo). */
+/** Pirámide slippy-map (coords de mundo). Una sola fuente horneada — sin procedural. */
 
 export const TILE_PX = 512;
-/** Nivel máximo de tiles mundi (2^8 = 256 tiles de lado → ~7.5 u/tile en W=1920). */
-export const TILE_LEVEL_MAX = 8;
+
+/** Fallback si aún no cargó tiles.json; el viewer usa manifest.maxLevel. */
+export const TILE_LEVEL_MAX = 2;
 
 export function tileWorldSize(worldW: number, level: number): number {
   return worldW / 2 ** Math.max(0, level);
@@ -12,11 +13,10 @@ export function tileWorldSize(worldW: number, level: number): number {
  * Nivel cuya resolución de tile ≈ 1 px de tile por px de pantalla.
  * zoom = px pantalla / unidad de mundo.
  */
-export function levelForZoom(zoom: number, worldW: number): number {
+export function levelForZoom(zoom: number, worldW: number, maxLevel = TILE_LEVEL_MAX): number {
   if (zoom <= 0 || worldW <= 0) return 0;
-  // ceil: preferir más resolución antes de que el tile se note estirado
   const raw = Math.log2((worldW * zoom) / TILE_PX);
-  return Math.max(0, Math.min(TILE_LEVEL_MAX, Math.ceil(raw)));
+  return Math.max(0, Math.min(maxLevel, Math.round(raw)));
 }
 
 export function tileCountX(worldW: number, level: number): number {
@@ -41,7 +41,6 @@ export function tileBounds(
   return { wx: x * s, wy: y * s, ww: s, wh: s };
 }
 
-/** Tiles visibles para un viewport en coords de mundo. */
 export function visibleTiles(
   worldW: number,
   worldH: number,

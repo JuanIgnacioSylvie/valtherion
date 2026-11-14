@@ -96,7 +96,7 @@ export function SideRail() {
               </p>
             )}
             <p className="text-xs text-mist/80">
-              Mundi: tiles GPU on-demand. Ciudades: datos vectoriales (Cenizabrava). Ver{" "}
+              Mundi: un DZI (master HD). Zoom a Cenizabrava/Selvareth = mismos tiles. Ver{" "}
               <code className="text-brass/80">docs/MAP-LODS.md</code>.
             </p>
             <div>

@@ -14,16 +14,16 @@
 
 | LOD | Asset | Notas |
 |-----|-------|-------|
-| 0 Mundi | `map-biomes-v2.jpg` | Zoom 100% = mapamundi |
-| 2 Ciudad | `scenes/cenizabrava.jpg` | Zoom nativo = ciudad llena viewport; no estirar más (anti-pixel) |
-| 3–4 | TBD | calles / pisos |
+| Mundi | `map-master.jpg` (DZI tiles) | paint + parches HD; zoom hasta 1:1 del master |
+| Ciudad | parche Cenizabrava en master | mismos tiles; overlay vector opcional |
+| Interior | TBD | pisos |
 
 ## Fuentes
 
 - Estilo: `content/art-refs/dnd-style/*`
-- Generados: `content/art-refs/generated/`
-- App mundi: `apps/web/public/worlds/valtherion/map-biomes-v2.jpg`
-- Ciudad demo: `apps/web/public/worlds/valtherion/scenes/cenizabrava.jpg`
+- Generados: `content/art-refs/generated/` (`*-hd.jpg`, world v5)
+- Bake: `pnpm map:build` → `map-master.jpg` + `tiles/`
+- Geo base: `map-dnd-v4.jpg` (alineado al seed)
 
 ## Descartado
 

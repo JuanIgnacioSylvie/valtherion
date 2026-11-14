@@ -12,7 +12,10 @@ type Job = {
 };
 
 /**
- * Rasteriza tiles 512². La cola prioriza el nivel actual y descarta jobs viejos.
+ * Rasteriza un tile de la pirámide (como pzmap2d → DZI).
+ * Regla simple:
+ *  - nivel ≤ 2: puede usar el mapa pintado (overview)
+ *  - nivel ≥ 3: solo procedural (el tile TRAE el detalle; no se estira un JPG)
  */
 export class TileRasterizer {
   private canvas: HTMLCanvasElement;
@@ -20,6 +23,7 @@ export class TileRasterizer {
   private program: WebGLProgram;
   private vao: WebGLVertexArrayObject;
   private paintTex: WebGLTexture | null = null;
+  private copy2d: HTMLCanvasElement;
   private uRes: WebGLUniformLocation | null;
   private uOffset: WebGLUniformLocation | null;
   private uZoom: WebGLUniformLocation | null;
@@ -29,8 +33,9 @@ export class TileRasterizer {
   private worldH = 911;
   private busy = false;
   private queue: Job[] = [];
-  /** Nivel de cámara actual: los jobs de otros niveles se saltan. */
   preferredLevel = 0;
+  /** Niveles que pueden muestrear el paint. */
+  static readonly PAINT_MAX_LEVEL = 2;
 
   private constructor(
     canvas: HTMLCanvasElement,
@@ -42,6 +47,9 @@ export class TileRasterizer {
     this.gl = gl;
     this.program = program;
     this.vao = vao;
+    this.copy2d = document.createElement("canvas");
+    this.copy2d.width = TILE_PX;
+    this.copy2d.height = TILE_PX;
     this.uRes = gl.getUniformLocation(program, "uRes");
     this.uOffset = gl.getUniformLocation(program, "uOffset");
     this.uZoom = gl.getUniformLocation(program, "uZoom");
@@ -122,15 +130,8 @@ export class TileRasterizer {
     }
   }
 
-  enqueue(
-    key: string,
-    level: number,
-    wx: number,
-    wy: number,
-    ww: number,
-  ): Promise<ImageBitmap | null> {
+  enqueue(key: string, level: number, wx: number, wy: number, ww: number): Promise<ImageBitmap | null> {
     return new Promise((resolve) => {
-      // Si ya hay un job igual, no duplicar
       const existing = this.queue.find((j) => j.key === key && !j.cancelled);
       if (existing) {
         const prev = existing.resolve;
@@ -141,17 +142,13 @@ export class TileRasterizer {
         return;
       }
       this.queue.push({ key, level, wx, wy, ww, resolve, cancelled: false });
-      // Priorizar nivel preferido
-      this.queue.sort((a, b) => {
-        const da = Math.abs(a.level - this.preferredLevel);
-        const db = Math.abs(b.level - this.preferredLevel);
-        return da - db;
-      });
+      this.queue.sort(
+        (a, b) => Math.abs(a.level - this.preferredLevel) - Math.abs(b.level - this.preferredLevel),
+      );
       void this.pump();
     });
   }
 
-  /** Cancela jobs que no sean del nivel actual (evita cola eterna al zoomear). */
   cancelOtherLevels(level: number) {
     this.preferredLevel = level;
     for (const j of this.queue) {
@@ -169,29 +166,29 @@ export class TileRasterizer {
     while (this.queue.length) {
       const job = this.queue.shift()!;
       if (job.cancelled) continue;
-      // Saltar si ya no es el nivel preferido
       if (job.level !== this.preferredLevel) {
         job.resolve(null);
         continue;
       }
       try {
-        job.resolve(await this.draw(job.wx, job.wy, job.ww));
+        job.resolve(await this.draw(job.level, job.wx, job.wy, job.ww));
       } catch (e) {
         console.warn("tile raster error", e);
         job.resolve(null);
       }
+      // Hasta 2 tiles por frame para no congelar el UI
       await new Promise((r) => requestAnimationFrame(() => r(null)));
     }
     this.busy = false;
   }
 
-  private copy2d: HTMLCanvasElement | null = null;
-
-  private async draw(wx: number, wy: number, ww: number): Promise<ImageBitmap | null> {
+  private async draw(level: number, wx: number, wy: number, ww: number): Promise<ImageBitmap | null> {
     const { gl, canvas } = this;
     const zoom = TILE_PX / ww;
     const offsetX = -wx * zoom;
     const offsetY = -wy * zoom;
+    const usePaint = !!this.paintTex && level <= TileRasterizer.PAINT_MAX_LEVEL;
+
     gl.viewport(0, 0, TILE_PX, TILE_PX);
     gl.useProgram(this.program);
     gl.bindVertexArray(this.vao);
@@ -201,27 +198,16 @@ export class TileRasterizer {
     gl.uniform2f(this.uOffset, offsetX, offsetY);
     gl.uniform1f(this.uZoom, zoom);
     gl.uniform2f(this.uWorld, this.worldW, this.worldH);
-    // Tiles de nivel alto: nunca muestrear el JPG (zoom = TILE_PX/ww).
-    gl.uniform1f(this.uHasPaint, this.paintTex && zoom < 1.75 ? 1 : 0);
-    gl.clearColor(0.1, 0.15, 0.2, 1);
+    gl.uniform1f(this.uHasPaint, usePaint ? 1 : 0);
+    gl.clearColor(0.12, 0.18, 0.28, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.finish(); // forzar GPU antes del readback
-    try {
-      // Copia 2D: createImageBitmap directo desde WebGL a veces no resuelve.
-      if (!this.copy2d) {
-        this.copy2d = document.createElement("canvas");
-        this.copy2d.width = TILE_PX;
-        this.copy2d.height = TILE_PX;
-      }
-      const ctx = this.copy2d.getContext("2d")!;
-      ctx.clearRect(0, 0, TILE_PX, TILE_PX);
-      ctx.drawImage(canvas, 0, 0);
-      return await createImageBitmap(this.copy2d);
-    } catch (e) {
-      console.warn("tile bitmap failed", e);
-      return null;
-    }
+    gl.finish();
+
+    const ctx = this.copy2d.getContext("2d")!;
+    ctx.clearRect(0, 0, TILE_PX, TILE_PX);
+    ctx.drawImage(canvas, 0, 0);
+    return createImageBitmap(this.copy2d);
   }
 
   destroy() {

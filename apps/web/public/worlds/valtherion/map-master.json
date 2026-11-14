@@ -1,0 +1,56 @@
+{
+  "worldWidth": 1920,
+  "worldHeight": 911,
+  "scale": 12,
+  "masterWidth": 23040,
+  "masterHeight": 10932,
+  "base": "map-dnd-v4.jpg",
+  "patches": [
+    {
+      "id": "korthaven-ashlands",
+      "file": "korthaven-ashlands-hd.jpg",
+      "x": 40,
+      "y": 360,
+      "w": 480,
+      "h": 360,
+      "feather": 56,
+      "px": {
+        "x": 480,
+        "y": 4320,
+        "w": 5760,
+        "h": 4320
+      }
+    },
+    {
+      "id": "selvareth",
+      "file": "selvareth-canopy-hd2.jpg",
+      "x": 980,
+      "y": 360,
+      "w": 320,
+      "h": 320,
+      "feather": 48,
+      "px": {
+        "x": 11760,
+        "y": 4320,
+        "w": 3840,
+        "h": 3840
+      }
+    },
+    {
+      "id": "cenizabrava",
+      "file": "cenizabrava-city-stitched.jpg",
+      "x": 170,
+      "y": 480,
+      "w": 220,
+      "h": 220,
+      "feather": 20,
+      "px": {
+        "x": 2040,
+        "y": 5760,
+        "w": 2640,
+        "h": 2640
+      }
+    }
+  ],
+  "builtAt": "2026-11-14T01:20:39.742Z"
+}

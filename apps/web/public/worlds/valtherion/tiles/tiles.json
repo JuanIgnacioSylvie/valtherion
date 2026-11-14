@@ -1,0 +1,71 @@
+{
+  "version": 3,
+  "model": "dzi-single-source",
+  "worldWidth": 1920,
+  "worldHeight": 911,
+  "imageWidth": 23040,
+  "imageHeight": 10932,
+  "tileSize": 512,
+  "minLevel": 0,
+  "maxLevel": 6,
+  "format": "webp",
+  "urlTemplate": "/worlds/valtherion/tiles/{z}/{x}_{y}.webp",
+  "nativeZoom": 12,
+  "source": {
+    "file": "map-master.jpg",
+    "width": 23040,
+    "height": 10932
+  },
+  "levels": [
+    {
+      "z": 0,
+      "cols": 1,
+      "rows": 1,
+      "imageWidth": 360,
+      "imageHeight": 171
+    },
+    {
+      "z": 1,
+      "cols": 2,
+      "rows": 1,
+      "imageWidth": 720,
+      "imageHeight": 342
+    },
+    {
+      "z": 2,
+      "cols": 3,
+      "rows": 2,
+      "imageWidth": 1440,
+      "imageHeight": 684
+    },
+    {
+      "z": 3,
+      "cols": 6,
+      "rows": 3,
+      "imageWidth": 2880,
+      "imageHeight": 1367
+    },
+    {
+      "z": 4,
+      "cols": 12,
+      "rows": 6,
+      "imageWidth": 5760,
+      "imageHeight": 2733
+    },
+    {
+      "z": 5,
+      "cols": 23,
+      "rows": 11,
+      "imageWidth": 11520,
+      "imageHeight": 5466
+    },
+    {
+      "z": 6,
+      "cols": 45,
+      "rows": 22,
+      "imageWidth": 23040,
+      "imageHeight": 10932
+    }
+  ],
+  "builtAt": "2026-11-14T01:25:32.308Z"
+}

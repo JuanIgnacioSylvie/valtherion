@@ -18,10 +18,14 @@
     "db:push": "pnpm --filter @valtherion/db push",
     "db:seed": "pnpm --filter @valtherion/db seed",
     "world:extract": "node scripts/extract-valtherion-seed.mjs",
-    "setup": "pnpm install && pnpm world:extract && pnpm db:up && pnpm db:generate && pnpm db:push && pnpm db:seed"
+    "map:compose": "node scripts/compose-map-master.mjs",
+    "tiles:build": "node scripts/build-world-tiles.mjs",
+    "map:build": "pnpm map:compose && pnpm tiles:build",
+    "setup": "pnpm install && pnpm world:extract && pnpm map:build && pnpm db:up && pnpm db:generate && pnpm db:push && pnpm db:seed"
   },
   "devDependencies": {
     "@types/node": "^22.13.0",
+    "sharp": "^0.35.5",
     "turbo": "^2.5.4",
     "typescript": "^5.7.3"
   }
