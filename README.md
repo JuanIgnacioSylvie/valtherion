@@ -1,34 +1,34 @@
-# Valtherion
+# Baires Garden
 
-Atlas jugable + mesa de rol para el mundo **Valtherion**.  
-Pantalla principal: mapa tipo Figma (pan/zoom). Lore tipo Baldur’s Gate. Reglas multi-sistema (D&D 2024 primero).
-
-Ver visión completa: [`docs/VISION.md`](docs/VISION.md).
+Réplica de la arquitectura de [baires.mormon.garden](https://baires.mormon.garden/) sobre el **plano real de Carlos Glade (1867)** (Gallica BnF, 18919×13272).
 
 ## Stack
 
-- **Web** (`apps/web`): Next.js 14 · PixiJS · Zustand · Tailwind — puerto **3001**
-- **API** (`apps/server`): Fastify · Socket.IO — puerto **4100**
-- **DB**: Postgres 16 (Docker en puerto **5433**) + Prisma
+Vite · TypeScript · Three.js · Sharp (tooling)
 
 ## Setup
 
 ```bash
-# Requisitos: Node 20+, pnpm, Docker
-pnpm setup
-# o paso a paso:
 pnpm install
-pnpm world:extract   # lee ../roldninja/maps/Valtherion.json
-pnpm db:up
-pnpm db:generate && pnpm db:push && pnpm db:seed
+pnpm plano:from-raw   # requiere public/plano/_raw.jpg (escaneo Gallica)
+pnpm plano:tile
+pnpm datos:extract    # techos/árboles desde la tinta del Glade
+pnpm hoy:osm          # georref + overlay OSM (calles/vías/costa)
+pnpm epocas:bake      # Latzina 1888 + Ludwig 1900 → crece/despeje
 pnpm dev
 ```
 
-- Web: http://localhost:3001  
-- API: http://localhost:4100/health  
+Abrí http://localhost:5173
 
-Usuarios seed: `dm` / `changeme`, `jugador1` / `changeme`
+Fuente del plano: [Gallica ark:/12148/btv1b53098699s](https://gallica.bnf.fr/ark:/12148/btv1b53098699s) (IIIF full). Si `pnpm plano:fetch` falla por Cloudflare, bajá el JPEG a mano a `_raw.jpg`. Overlay “Hoy”: © OpenStreetMap.
 
-## Workspace
+Alternativa procedural: `pnpm bootstrap` (ciudad sintética).
 
-Proyecto **separado** de Roldninja (`../roldninja`). Comparte origen de datos del mapa y reglas, no el código de la mesa anterior.
+Ver [ROADMAP.md](ROADMAP.md).
+
+## Controles (Fase 1)
+
+- Arrastrar: pan
+- Rueda: zoom
+- Botón derecho: órbita / inclinación
+- Space: plano ⇄ ciudad (stub hasta Fase 2)

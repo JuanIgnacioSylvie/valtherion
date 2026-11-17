@@ -1,32 +1,35 @@
 {
-  "name": "valtherion",
-  "version": "0.1.0",
+  "name": "baires-garden",
   "private": true,
-  "description": "Valtherion — atlas jugable y mesa de rol para un mundo propio (multi-sistema, D&D 2024 primero).",
-  "packageManager": "pnpm@11.8.0",
-  "engines": {
-    "node": ">=20"
-  },
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Buenos Aires 1867–1940: reconstrucción 3D del plano de Carlos Glade",
   "scripts": {
-    "dev": "pnpm db:generate && turbo run dev --parallel",
-    "build": "turbo run build",
-    "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck",
-    "db:up": "docker compose up -d",
-    "db:down": "docker compose down",
-    "db:generate": "pnpm --filter @valtherion/db generate",
-    "db:push": "pnpm --filter @valtherion/db push",
-    "db:seed": "pnpm --filter @valtherion/db seed",
-    "world:extract": "node scripts/extract-valtherion-seed.mjs",
-    "map:compose": "node scripts/compose-map-master.mjs",
-    "tiles:build": "node scripts/build-world-tiles.mjs",
-    "map:build": "pnpm map:compose && pnpm tiles:build",
-    "setup": "pnpm install && pnpm world:extract && pnpm map:build && pnpm db:up && pnpm db:generate && pnpm db:push && pnpm db:seed"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "city:generate": "tsx tools/generate-city.ts",
+    "plano:fetch": "tsx tools/download-glade.ts",
+    "plano:placeholder": "tsx tools/make-placeholder.ts",
+    "plano:from-raw": "tsx tools/from-raw.ts",
+    "plano:tile": "tsx tools/tile-plano.ts",
+    "datos:build": "tsx tools/build-datos.ts",
+    "datos:extract": "tsx tools/extract-ink.ts",
+    "datos:import-orig": "tsx tools/import-orig.ts",
+    "hoy:osm": "tsx tools/bake-hoy-osm.ts",
+    "epocas:bake": "tsx tools/bake-epocas.ts",
+    "bootstrap": "pnpm plano:from-raw && pnpm plano:tile && pnpm datos:extract && pnpm hoy:osm",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "^0.187.0"
   },
   "devDependencies": {
-    "@types/node": "^22.13.0",
+    "@types/node": "^26.6.6",
+    "@types/three": "^0.187.0",
     "sharp": "^0.35.5",
-    "turbo": "^2.5.4",
-    "typescript": "^5.7.3"
+    "tsx": "^4.23.15",
+    "typescript": "~7.0.2",
+    "vite": "^8.3.6"
   }
 }

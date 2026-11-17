@@ -1,0 +1,91 @@
+[
+  {
+    "rel": "datos/ciudad.pak",
+    "ok": true,
+    "bytes": 1332305
+  },
+  {
+    "rel": "datos/ciudad.json",
+    "ok": true,
+    "bytes": 1383,
+    "type": "application/json"
+  },
+  {
+    "rel": "plano/suelo.webp",
+    "ok": true,
+    "bytes": 628630,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/suelo-2k.webp",
+    "ok": true,
+    "bytes": 212794,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/calles.webp",
+    "ok": true,
+    "bytes": 590046,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/calles-2k.webp",
+    "ok": true,
+    "bytes": 467610,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/crece.webp",
+    "ok": true,
+    "bytes": 690070,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/despeje.webp",
+    "ok": true,
+    "bytes": 32524,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/relieve.webp",
+    "ok": false,
+    "status": 404,
+    "bytes": 0
+  },
+  {
+    "rel": "plano/primero.webp",
+    "ok": true,
+    "bytes": 131212,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/medio.webp",
+    "ok": true,
+    "bytes": 8994292,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/chico.webp",
+    "ok": true,
+    "bytes": 805214,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/hoy-cerca.webp",
+    "ok": true,
+    "bytes": 2193912,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/hoy-lejos.webp",
+    "ok": true,
+    "bytes": 271698,
+    "type": "image/webp"
+  },
+  {
+    "rel": "plano/laminas.json",
+    "ok": false,
+    "status": 200,
+    "bytes": 60
+  }
+]
