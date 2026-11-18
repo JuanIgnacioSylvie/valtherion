@@ -53,10 +53,10 @@ export class LandmarkKit {
   private ancla: number[] = [];
   private estilo: number[] = [];
   private idx: number[] = [];
-  private ox = 0;
-  private oz = 0;
-  private ax = 0;
-  private az = 0;
+  ox = 0;
+  oz = 0;
+  ax = 0;
+  az = 0;
   private ux = 1;
   private uz = 0;
   private epocaFrom = 0;
@@ -272,12 +272,19 @@ export class LandmarkKit {
   }
 
   arbol(x: number, z: number, r = 1.5) {
+    // ancla en el pie del árbol (no en el hito) para que el relieve no lo deje flotando
+    const prevAx = this.ax;
+    const prevAz = this.az;
+    this.ax = this.ox + x;
+    this.az = this.oz + z;
     this.cilindro(r * 0.12, r * 1.1, x, 0, z, this.PINTADO, 6, r * 0.1, {
       pinta: [Pinta.MADERA, 0.5],
     });
     const crown = new THREE.IcosahedronGeometry(r * 0.85, 0);
     crown.translate(x, r * 1.35, z);
     this.put(crown, this.FOLLAJE, { pinta: [Pinta.CESPED, 0.7], H: r * 2 });
+    this.ax = prevAx;
+    this.az = prevAz;
   }
 
   vano(w: number, h: number, x: number, y: number, z: number, face: string) {

@@ -2,17 +2,21 @@ import * as THREE from "three";
 import { pxToWorld } from "../plano/coords";
 import type { PlanoMeta } from "../plano/types";
 
+type PatioRec = { x: number; z: number; side: number; h: number; rot: number; t: number };
+
 /**
- * Patios del original (patios.pak): aljibes / manchas de patio.
- * Solo se ven en color (como el original: dist negativa → alzado con uColor).
- * En tinta no se dibujan — el “pasto” malo eran estos cubos verdes.
+ * Patios del original (patios.pak): discos bajos de tierra/patio.
+ * Solo en color + ciudad levantada. Anclados al relieve para que no floten.
  */
 export class PatiosMeshes {
   readonly group = new THREE.Group();
   private mesh: THREE.InstancedMesh | null = null;
   private dummy = new THREE.Object3D();
+  private recs: PatioRec[] = [];
   visibleLift = 0;
   private colorOn = 0;
+  heightAt: ((x: number, z: number) => number) | null = null;
+  private lastAmount = -1;
 
   constructor(_meta: PlanoMeta) {
     this.group.visible = false;
@@ -38,6 +42,7 @@ export class PatiosMeshes {
       const suerte = body.subarray(5 * n, 6 * n);
 
       const geo = new THREE.CylinderGeometry(1, 1, 1, 8);
+      geo.translate(0, 0.5, 0);
       const mat = new THREE.MeshStandardMaterial({
         color: 0xffffff,
         roughness: 0.96,
@@ -57,33 +62,51 @@ export class PatiosMeshes {
       layer.mesh = mesh;
       layer.group.add(mesh);
 
-      const dummy = layer.dummy;
-      let shown = 0;
+      const recs: PatioRec[] = [];
       for (let i = 0; i < n; i++) {
         const r = radio[i] ?? 4;
         if (r < 3) continue;
         const [wx, wz] = pxToWorld(meta, x[i]!, y[i]!);
-        // discos chatos de tierra/patio (no “césped” alto)
         const side = Math.min(10, Math.max(1.6, r * 0.28));
-        const h = 0.08;
-        dummy.position.set(wx, h * 0.5 + 0.02, wz);
-        dummy.scale.set(side, h, side);
-        dummy.rotation.set(0, ((suerte[i] ?? 0) / 255) * Math.PI, 0);
-        dummy.updateMatrix();
-        mesh.setMatrixAt(shown, dummy.matrix);
+        const h = 0.06;
         const t = (suerte[i] ?? 0) / 255;
-        // tierra / patio seco
-        mesh.setColorAt(shown, new THREE.Color(0.52 + t * 0.08, 0.44 + t * 0.06, 0.3));
-        shown++;
+        recs.push({
+          x: wx,
+          z: wz,
+          side,
+          h,
+          rot: ((suerte[i] ?? 0) / 255) * Math.PI,
+          t,
+        });
       }
-      mesh.count = shown;
-      mesh.instanceMatrix.needsUpdate = true;
-      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+      layer.recs = recs;
+      layer.applyMatrices(true);
       return layer;
     } catch (e) {
       console.warn("patios.pak no cargó", e);
       return null;
     }
+  }
+
+  private applyMatrices(forceColors = false) {
+    const mesh = this.mesh;
+    if (!mesh) return;
+    const dummy = this.dummy;
+    for (let i = 0; i < this.recs.length; i++) {
+      const r = this.recs[i]!;
+      const ground = this.heightAt ? this.heightAt(r.x, r.z) : 0;
+      dummy.position.set(r.x, ground, r.z);
+      dummy.scale.set(r.side, r.h, r.side);
+      dummy.rotation.set(0, r.rot, 0);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+      if (forceColors) {
+        mesh.setColorAt(i, new THREE.Color(0.52 + r.t * 0.08, 0.44 + r.t * 0.06, 0.3));
+      }
+    }
+    mesh.count = this.recs.length;
+    mesh.instanceMatrix.needsUpdate = true;
+    if (forceColors && mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   }
 
   setColorMode(c: number) {
@@ -93,11 +116,16 @@ export class PatiosMeshes {
 
   setLift(lift: number) {
     this.visibleLift = lift;
+    // re-anclar cuando cambia el relieve
+    const key = this.heightAt ? lift : 0;
+    if (Math.abs(key - this.lastAmount) > 0.002) {
+      this.lastAmount = key;
+      this.applyMatrices();
+    }
     this.syncVisible();
   }
 
   private syncVisible() {
-    // solo con ciudad levantada + color (como el original)
     this.group.visible = this.visibleLift > 0.05 && this.colorOn > 0.35;
   }
 

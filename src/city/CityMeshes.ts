@@ -8,27 +8,6 @@ import { estiloDe } from "./estilo";
 
 export type CityStats = { techos: number; arboles: number; manzanas: number; muros?: number };
 
-const _c = new THREE.Color();
-
-function hash01(n: number) {
-  const x = Math.sin(n * 127.1) * 43758.5453;
-  return x - Math.floor(x);
-}
-
-function trunkColor(seed: number, out: THREE.Color) {
-  out.setRGB(0.35, 0.24, 0.16);
-  out.offsetHSL(0, 0, (hash01(seed) - 0.5) * 0.1);
-  return out;
-}
-
-function crownColor(seed: number, out: THREE.Color) {
-  const t = hash01(seed * 4.4);
-  if (t < 0.33) out.setRGB(0.28, 0.48, 0.2);
-  else if (t < 0.66) out.setRGB(0.22, 0.4, 0.18);
-  else out.setRGB(0.38, 0.52, 0.22);
-  return out;
-}
-
 function encodeDist(dist: number, nace: number, muere: number) {
   const et = (nace | 0) + 8 * (muere >= 255 ? 0 : muere | 0);
   return dist + et * 20000;
@@ -83,8 +62,6 @@ export class CityMeshes {
   epocaK = 0;
   colorMode = 0;
   visibleLift = 0;
-  /** Altura de terreno (m) para anclar árboles y que no “vuelen”. */
-  heightAt: ((x: number, z: number) => number) | null = null;
 
   constructor(
     meta: PlanoMeta,
@@ -128,21 +105,23 @@ export class CityMeshes {
     this.roofsFlat.count = nT;
     this.roofsPitch.count = 0;
 
-    const na = arboles.length / 4;
-    this.trunks = new THREE.InstancedMesh(
-      new THREE.CylinderGeometry(0.28, 0.42, 1, 6),
-      this.trunkMat,
-      na,
-    );
-    this.crowns = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), this.crownMat, na);
-    this.crowns2 = new THREE.InstancedMesh(
-      new THREE.IcosahedronGeometry(0.7, 0),
-      this.crownMat.clone(),
-      na,
-    );
+    // Tronco/copa con pivote en el suelo (y=0); el shader suma relieve vía aAncla.
+    const trunkGeo = new THREE.CylinderGeometry(0.28, 0.42, 1, 6);
+    trunkGeo.translate(0, 0.5, 0);
+    const crownGeo = new THREE.IcosahedronGeometry(1, 0);
+    crownGeo.translate(0, 1.15, 0);
+    const crown2Geo = new THREE.IcosahedronGeometry(0.72, 0);
+    crown2Geo.translate(0.35, 1.45, 0.1);
+
+    const na = Math.max(1, arboles.length / 4);
+    this.trunks = new THREE.InstancedMesh(trunkGeo, this.trunkMat, na);
+    this.crowns = new THREE.InstancedMesh(crownGeo, this.crownMat, na);
+    this.crowns2 = new THREE.InstancedMesh(crown2Geo, this.crownMat.clone(), na);
     for (const m of [this.trunks, this.crowns, this.crowns2]) {
       m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-      m.count = na;
+      m.count = 0;
+      m.castShadow = true;
+      m.receiveShadow = true;
       m.frustumCulled = false;
     }
 
@@ -155,14 +134,22 @@ export class CityMeshes {
     this.shared = shared;
     this.roofMat.dispose();
     this.wallMat.dispose();
+    this.trunkMat.dispose();
+    this.crownMat.dispose();
     this.roofMat = makeCityMaterial(shared, { manto: 3 });
     this.wallMat = makeCityMaterial(shared, { manto: 3 });
+    this.trunkMat = makeCityMaterial(shared, { manto: 3 });
+    this.crownMat = makeCityMaterial(shared, { manto: 3 });
     const depth = makeCityDepthMaterial(shared);
     this.walls.material = this.wallMat;
     this.roofsFlat.material = this.roofMat;
     this.roofsPitch.material = this.roofMat;
-    this.walls.customDepthMaterial = depth;
-    this.roofsFlat.customDepthMaterial = depth;
+    this.trunks.material = this.trunkMat;
+    this.crowns.material = this.crownMat;
+    this.crowns2.material = this.crownMat;
+    for (const m of [this.walls, this.roofsFlat, this.roofsPitch, this.trunks, this.crowns, this.crowns2]) {
+      m.customDepthMaterial = depth;
+    }
     this.baked = false;
     this.bake();
   }
@@ -267,9 +254,8 @@ export class CityMeshes {
   rebuild(lift: number) {
     this.visibleLift = lift;
     this.group.visible = lift > 0.01;
+    // muros/techos/árboles: alzado + relieve van en el shader (uFront / tRelieve)
     if (!this.baked) this.bake();
-    // el shader usa uFront; trees siguen en JS por kind 50
-    this.bakeTrees(this.meta.metro);
   }
 
   private bakeRoofs(metro: number) {
@@ -389,55 +375,61 @@ export class CityMeshes {
 
   private bakeTrees(metro: number) {
     const na = this.arboles.length / 4;
-    const lift = this.visibleLift;
+    const trunkA = ensureInstAttrs(this.trunks, na);
+    const crownA = ensureInstAttrs(this.crowns, na);
+    const crown2A = ensureInstAttrs(this.crowns2, na);
+    // y=0 + aAncla: el vertex shader suma altura(relieve). Sin heightAt en JS.
     for (let i = 0; i < na; i++) {
       const o = i * 4;
       const px = this.arboles[o]!;
       const py = this.arboles[o + 1]!;
-      const r = this.arboles[o + 2]! * metro * (this.colorMode > 0.5 ? 1.15 : 1);
+      const rPx = this.arboles[o + 2]!;
       const seed = this.arboles[o + 3]!;
       const [x, z] = pxToWorld(this.meta, px, py);
       const dist = Math.hypot(x, z);
-      const wave = Math.max(0, Math.min(1, (this.front - dist - seed * 140) / 300));
-      const c = (this.colorMode > 0.2 ? wave : wave * 0.15) * lift;
-      if (c < 0.04) {
-        this.dummy.scale.set(0, 0, 0);
-        this.dummy.updateMatrix();
-        this.trunks.setMatrixAt(i, this.dummy.matrix);
-        this.crowns.setMatrixAt(i, this.dummy.matrix);
-        this.crowns2.setMatrixAt(i, this.dummy.matrix);
-        continue;
-      }
-      crownColor(seed, _c);
-      if (this.colorMode < 0.5) _c.multiplyScalar(0.45);
-      this.crowns.setColorAt(i, _c);
-      this.crowns2.setColorAt(i, _c);
-      trunkColor(seed, _c);
-      if (this.colorMode < 0.5) _c.setRGB(0.2, 0.18, 0.14);
-      this.trunks.setColorAt(i, _c);
+      const r = Math.max(0.8, rPx * metro);
+      const th = 2.6 + seed * 1.4;
 
-      const th = (this.colorMode > 0.5 ? 3.4 : 2.2) * c;
-      const ground = this.heightAt ? this.heightAt(x, z) : 0;
-      this.dummy.position.set(x, ground, z);
+      this.dummy.position.set(x, 0, z);
       this.dummy.rotation.set(0, seed * 6.2, 0);
-      this.dummy.scale.set(r * 0.22, th, r * 0.22);
+      this.dummy.scale.set(r * 0.18, th, r * 0.18);
       this.dummy.updateMatrix();
       this.trunks.setMatrixAt(i, this.dummy.matrix);
-      this.dummy.position.y = ground + th;
-      this.dummy.scale.set(r * c, r * c, r * c);
+
+      this.dummy.scale.set(r, r, r);
       this.dummy.updateMatrix();
       this.crowns.setMatrixAt(i, this.dummy.matrix);
-      this.dummy.position.y = ground + th + r * 0.35 * c;
-      this.dummy.scale.set(r * 0.65 * c, r * 0.55 * c, r * 0.65 * c);
+
+      this.dummy.rotation.set(0, seed * 6.2 + 1.1, 0);
+      this.dummy.scale.set(r * 0.72, r * 0.65, r * 0.72);
       this.dummy.updateMatrix();
       this.crowns2.setMatrixAt(i, this.dummy.matrix);
+
+      // kind 70 = tronco oscuro · kind 50 = follaje. Alzado por uFront; relieve por aAncla.
+      setAttr4(trunkA.aInfo, i, seed, 70, th, dist);
+      setAttr4(trunkA.aWall, i, 0, 0, th, th);
+      setAttr3(trunkA.aAncla, i, x, z, 1);
+      trunkA.aEstilo.setX(i, 0);
+
+      setAttr4(crownA.aInfo, i, seed, 50, r * 2, dist);
+      setAttr4(crownA.aWall, i, 0, 0, 7 /* césped */, 0.7);
+      setAttr3(crownA.aAncla, i, x, z, 1);
+      crownA.aEstilo.setX(i, 0);
+
+      setAttr4(crown2A.aInfo, i, seed + 0.17, 50, r * 1.6, dist);
+      setAttr4(crown2A.aWall, i, 0, 0, 7, 0.7);
+      setAttr3(crown2A.aAncla, i, x, z, 1);
+      crown2A.aEstilo.setX(i, 0);
     }
+    this.trunks.count = na;
+    this.crowns.count = na;
+    this.crowns2.count = na;
     this.trunks.instanceMatrix.needsUpdate = true;
     this.crowns.instanceMatrix.needsUpdate = true;
     this.crowns2.instanceMatrix.needsUpdate = true;
-    if (this.trunks.instanceColor) this.trunks.instanceColor.needsUpdate = true;
-    if (this.crowns.instanceColor) this.crowns.instanceColor.needsUpdate = true;
-    if (this.crowns2.instanceColor) this.crowns2.instanceColor.needsUpdate = true;
+    markAttrs(trunkA);
+    markAttrs(crownA);
+    markAttrs(crown2A);
   }
 
   dispose() {

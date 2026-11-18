@@ -387,15 +387,18 @@ export class App {
       const lift = THREE.MathUtils.damp(this.city.visibleLift, targetLift, 3.2, dt);
       this.city.front = this.front;
       this.city.epocaK = this.epocas.k;
-      if (this.relieve) {
-        const rel = this.relieve;
-        this.city.heightAt = (x, z) => rel.heightAt(x, z) * rel.amount;
-      } else {
-        this.city.heightAt = null;
-      }
       this.city.rebuild(lift);
       this.landmarks?.setLift(lift);
-      this.patios?.setLift(lift);
+      if (this.patios) {
+        if (this.relieve) {
+          const rel = this.relieve;
+          const amt = rel.amount;
+          this.patios.heightAt = (x, z) => rel.heightAt(x, z) * amt;
+        } else {
+          this.patios.heightAt = null;
+        }
+        this.patios.setLift(this.relieve?.amount ?? lift);
+      }
     }
 
     if (this.hoy) {

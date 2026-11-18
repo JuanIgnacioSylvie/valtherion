@@ -305,12 +305,18 @@ function avenidaDeMayo(ctx: Ctx, out: PuEntry[]) {
       { claro: 0.82, alto: 0.12 },
     );
     for (let s = -half + 35; s < half - 35; s += 32) {
-      // palmeras (tronco alto + corona)
+      // palmeras (tronco alto + corona), ancladas a su pie
       for (const side of [-16, 16]) {
+        const prevAx = k.ax;
+        const prevAz = k.az;
+        k.ax = k.ox + side;
+        k.az = k.oz + s;
         k.cilindro(0.28, 7.5, side, 0, s, k.PINTADO, 6, 0.22, { pinta: [Pinta.MADERA, 0.55] });
         const crown = new THREE.ConeGeometry(2.2, 3.2, 7);
         crown.translate(side, 8.2, s);
         k.put(crown, k.FOLLAJE, { pinta: [Pinta.CESPED, 0.7], H: 10 });
+        k.ax = prevAx;
+        k.az = prevAz;
       }
     }
     for (let s = -half + 50; s < half - 50; s += 48) {
