@@ -50,26 +50,71 @@ export class HitosLayer {
     this.year = y;
   }
 
+  /** Referencias (nivel 1) vigentes para el año — para el panel lateral. */
+  refsForYear(year = this.year): Hito[] {
+    return this.items
+      .map((it) => it.h)
+      .filter((h) => (h.nivel ?? 2) === 1 && year >= (h.desde ?? 1867) && year < (h.hasta ?? 9999));
+  }
+
   update(camera: THREE.Camera, renderer: THREE.WebGLRenderer) {
     const { width, height } = renderer.domElement.getBoundingClientRect();
     const v = new THREE.Vector3();
-    for (const it of this.items) {
+    const camPos = new THREE.Vector3();
+    camera.getWorldPosition(camPos);
+    const boxes: [number, number, number, number][] = [];
+
+    const ordered = [
+      ...this.items.filter((it) => (it.h.nivel ?? 2) === 1),
+      ...this.items.filter((it) => (it.h.nivel ?? 2) !== 1),
+    ];
+
+    for (const it of ordered) {
       const since = it.h.desde ?? 1867;
       const until = it.h.hasta ?? 9999;
-      const show = this.year >= since && this.year < until;
-      if (!show) {
+      const inYear = this.year >= since && this.year < until;
+      const nivel = it.h.nivel ?? 2;
+      // distancia cámara → hito (no |cam| al origen)
+      const dist = camPos.distanceTo(it.world);
+      const nearOk =
+        nivel === 1
+          ? dist < 14000
+          : dist < (nivel === 2 ? 2200 : 900);
+      if (!inYear || !nearOk) {
         it.el.style.display = "none";
         continue;
       }
       v.copy(it.world);
+      v.y = 6;
       v.project(camera);
-      if (v.z > 1) {
+      if (v.z > 1 || Math.abs(v.x) > 1.08 || Math.abs(v.y) > 1.08) {
         it.el.style.display = "none";
         continue;
       }
       const sx = (v.x * 0.5 + 0.5) * width;
       const sy = (-v.y * 0.5 + 0.5) * height;
+      const isRef = nivel === 1;
+      const pad = 6;
+      const w = isRef ? 120 : 170;
+      const h = isRef ? 28 : 48;
+      const box: [number, number, number, number] = [
+        sx - w / 2 - pad,
+        sy - 36 - h - pad,
+        sx + w / 2 + pad,
+        sy + pad,
+      ];
+      const overlap = boxes.some(
+        (b) => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1],
+      );
+      // refs también se ocultan si se pisan (salvo el primero)
+      if (overlap) {
+        it.el.style.display = "none";
+        continue;
+      }
+      boxes.push(box);
       it.el.style.display = "block";
+      it.el.classList.toggle("ref", isRef);
+      // anclar el punto rojo al mundo; el tag cuelga abajo-derecha
       it.el.style.transform = `translate(${sx}px, ${sy}px)`;
     }
   }

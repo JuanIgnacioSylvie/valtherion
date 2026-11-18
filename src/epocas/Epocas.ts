@@ -21,6 +21,27 @@ export class EpocasController {
     } catch {
       this.epocas = [{ año: 1867, titulo: "Glade", corto: "1867" }];
     }
+    // Enriquecer blurbs / cortos con crece.json del original
+    try {
+      const crece = await fetch("/datos/crece.json").then((r) =>
+        r.ok ? r.json() : null,
+      );
+      const extras = (crece?.epocas ?? []) as Array<{
+        año: number;
+        corto?: string;
+        obras?: string;
+        titulo?: string;
+      }>;
+      for (const ep of this.epocas) {
+        const hit = extras.find((e) => e.año === ep.año);
+        if (!hit) continue;
+        if (hit.corto) ep.corto = hit.corto;
+        if (hit.obras) ep.obras = hit.obras;
+        else if (hit.titulo && !ep.obras) ep.obras = hit.titulo;
+      }
+    } catch {
+      /* */
+    }
   }
 
   get current() {

@@ -93,22 +93,21 @@ void main() {
     float n1 = hash21(xz * 0.045);
     float n2 = hash21(xz * 0.3 + 2.0);
     float nf = hash21(xz * 1.9 + 3.0);
-    // tierra apisonada en ciudad; pasto en afueras
+    // tierra apisonada en ciudad; pasto en afueras (como sueloColor del original)
     vec3 tierra = mix(vec3(0.6, 0.5, 0.375), vec3(0.75, 0.655, 0.5), n1) * (0.94 + 0.12 * nf);
     vec3 pasto = mix(vec3(0.36, 0.43, 0.2), vec3(0.6, 0.57, 0.31), n1) * (0.9 + 0.2 * nf);
     float rio = smoothstep(0.25, 0.55, s.r);
-    float verd = smoothstep(0.18, 0.55, s.g);
-    // no pintar toda la manzana como azotea: solo tinta densa + lift bajo
+    float verd = smoothstep(0.3, 0.7, s.g);
     float edi = smoothstep(0.35, 0.75, s.b) * (1.0 - uLift * 0.85);
     float rioNow = rio * (1.0 - llego(texture2D(tCrece, uv).r, uEpocaK) * 0.85);
-    // afueras = pasto; centro con tinta = tierra; patios = verd
     float urbano = smoothstep(0.12, 0.4, s.b);
-    vec3 ccol = mix(pasto, tierra, max(urbano * 0.85, edi));
-    // patios / fondos
-    float mata = smoothstep(0.5, 0.62, n1 * 0.6 + n2 * 0.4);
+    vec3 ccol = mix(pasto, tierra, max(urbano, edi));
+    // patios / pulmones: tierra + matas (cerca se apagan con uLift)
     vec3 fondo = mix(vec3(0.55, 0.46, 0.32), vec3(0.63, 0.54, 0.38), n2) * (0.88 + 0.2 * nf);
+    fondo = mix(fondo, mix(vec3(0.4, 0.44, 0.2), vec3(0.5, 0.52, 0.26), nf), 0.5 * smoothstep(0.5, 0.78, n1 * 0.65 + n2 * 0.35));
+    float mata = smoothstep(0.5, 0.62, n1 * 0.6 + n2 * 0.4) * mix(1.0, 0.15, uLift);
     fondo = mix(fondo, mix(vec3(0.17, 0.25, 0.11), vec3(0.3, 0.38, 0.16), nf), mata);
-    ccol = mix(ccol, fondo, verd * 0.9);
+    ccol = mix(ccol, fondo, verd);
     // azoteas acostadas
     ccol = mix(ccol, vec3(0.66, 0.43, 0.33) * (0.9 + 0.2 * n1), edi * (1.0 - uLift) * 0.85);
     // calles
@@ -142,7 +141,7 @@ export class PlanoMesh {
   readonly group = new THREE.Group();
   readonly mesh: THREE.Mesh;
   readonly meta: PlanoMeta;
-  private material: THREE.ShaderMaterial;
+  material: THREE.ShaderMaterial;
   private laminas: LaminasMeta | null;
   private baseUrl: string;
   private fineKeys: (string | null)[] = [null, null, null, null];
@@ -179,8 +178,8 @@ export class PlanoMesh {
           ],
         },
         uFineOn: { value: [0, 0, 0, 0] },
-        uPaper: { value: new THREE.Color("#efe2c4") },
-        uInk: { value: new THREE.Color("#1e1814") },
+        uPaper: { value: new THREE.Color("#f7eedb") },
+        uInk: { value: new THREE.Color("#2e2620") },
         uLift: { value: 0 },
         uColor: { value: 0 },
         uEpocaK: { value: 0 },
@@ -195,10 +194,13 @@ export class PlanoMesh {
   }
 
   async loadBase(prefer: "chico" | "medio" | "primero" = "chico"): Promise<void> {
+    // Preferir medio-4k del original cuando pedimos detalle.
     const candidates =
       prefer === "medio"
-        ? ["medio.webp", "chico.webp", "primero.webp", "source.webp"]
-        : ["chico.webp", "medio.webp", "primero.webp", "source.webp"];
+        ? ["medio-4k.webp", "medio.webp", "chico.webp", "primero.webp", "source.webp"]
+        : prefer === "primero"
+          ? ["primero.webp", "chico.webp", "medio.webp", "source.webp"]
+          : ["chico.webp", "medio.webp", "primero.webp", "source.webp"];
 
     let lastErr: unknown;
     for (const name of candidates) {
@@ -218,12 +220,12 @@ export class PlanoMesh {
       throw lastErr instanceof Error ? lastErr : new Error("No hay textura de plano");
     }
 
-    // capas opcionales (preferir 2k del original si está)
+    // Overlays: preferir 2k del original (crece/despeje/suelo/calles)
     for (const [key, files] of [
       ["tSuelo", ["suelo-2k.webp", "suelo.webp"]],
       ["tCalles", ["calles-2k.webp", "calles.webp"]],
-      ["tCrece", ["crece.webp"]],
-      ["tDespeje", ["despeje.webp"]],
+      ["tCrece", ["crece-2k.webp", "crece.webp"]],
+      ["tDespeje", ["despeje-2k.webp", "despeje.webp"]],
     ] as const) {
       for (const file of files) {
         try {
@@ -284,7 +286,8 @@ export class PlanoMesh {
       }
     }
 
-    const nextKeys = wanted.map((w) => `${w.col}_${w.row}`);
+    // Naming del original: plano/f/{col}-{row}.webp (tesela 3072, 7×5).
+    const nextKeys = wanted.map((w) => `${w.col}-${w.row}`);
     const keep = new Set(nextKeys);
 
     for (let i = 0; i < 4; i++) {
@@ -301,13 +304,13 @@ export class PlanoMesh {
     }
 
     for (const w of wanted) {
-      const key = `${w.col}_${w.row}`;
+      const key = `${w.col}-${w.row}`;
       if (this.fineKeys.includes(key)) continue;
       let slot = this.fineKeys.findIndex((k) => k === null);
       if (slot < 0) continue;
 
       try {
-        const tex = await this.loadTex(`${this.baseUrl}/tiles/${key}.webp`);
+        const tex = await this.loadTex(`${this.baseUrl}/f/${key}.webp`);
         tex.colorSpace = THREE.NoColorSpace;
         tex.minFilter = THREE.LinearFilter;
         tex.magFilter = THREE.LinearFilter;
