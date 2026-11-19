@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { CityMeshes } from "../city/CityMeshes";
 import { CityUniforms } from "../city/CityUniforms";
+import { setEstiloMode } from "../city/estilo";
 import { LandmarkMeshes } from "../city/LandmarkMeshes";
 import { PatiosMeshes } from "../city/Patios";
 import { EpocasController } from "../epocas/Epocas";
@@ -46,6 +47,8 @@ export class App {
   private fineTimer = 0;
   private front = 0;
   private meta: PlanoMeta = GLADE_REF;
+  /** Ciudad procedural (Aurion): sin relieve BA. */
+  private synthetic = false;
   private marca: THREE.Mesh | null = null;
   private amb: THREE.AmbientLight;
   private sun: THREE.DirectionalLight;
@@ -139,9 +142,15 @@ export class App {
 
     this.hud.setStatus("Cargando…");
 
-    const meta = await this.loadJson<PlanoMeta>("/datos/ciudad.json")
-      .then((j) => ("plano" in j ? (j as { plano: PlanoMeta }).plano : (j as PlanoMeta)))
-      .catch(() => GLADE_REF);
+    const ciudadJson = await this.loadJson<Record<string, unknown>>("/datos/ciudad.json").catch(
+      () => null,
+    );
+    this.synthetic = !!(ciudadJson && ciudadJson.synthetic);
+    setEstiloMode(this.synthetic ? "medieval" : "baires");
+    const meta =
+      ciudadJson && "plano" in ciudadJson
+        ? (ciudadJson.plano as PlanoMeta)
+        : ((ciudadJson as PlanoMeta | null) ?? GLADE_REF);
     this.meta = meta;
 
     const laminas = await this.loadJson<LaminasMeta>("/plano/laminas.json").catch(() => null);
@@ -184,8 +193,10 @@ export class App {
     await this.calles.load();
 
     this.relieve = new RelieveMesh(meta);
-    await this.relieve.load();
-    this.scene.add(this.relieve.mesh);
+    if (!this.synthetic) {
+      await this.relieve.load();
+      this.scene.add(this.relieve.mesh);
+    }
 
     this.hitos = new HitosLayer(meta);
     this.hitos.onGo = (x, z) => this.flyTo(x, z);
@@ -377,7 +388,9 @@ export class App {
       // original: calidad “simple” → 5200 m (matas lejos / afuera del frente)
       this.cityU.setMatas(this.colorMode && this.cityMode ? 5200 : 0);
       if (this.plano) this.cityU.bindPlanoUniforms(this.plano.material.uniforms);
-      if (this.relieve) {
+      if (this.synthetic) {
+        this.cityU.setRelieve(null, 0);
+      } else if (this.relieve) {
         // Original: tRelieve en metros × uRelieve factor (~0..2). No multiplicar por maxH.
         this.cityU.setRelieve(this.relieve.heightTex, this.relieve.amount);
       }
@@ -408,7 +421,7 @@ export class App {
     }
 
     // relieve visual del terreno; en el shader uRelieve es factor suave (el original default es 0)
-    if (this.relieve) {
+    if (this.relieve && !this.synthetic) {
       const want = this.cityMode ? 0.2 : 0;
       const a = THREE.MathUtils.damp(this.relieve.amount, want, 3, dt);
       this.relieve.setAmount(a);

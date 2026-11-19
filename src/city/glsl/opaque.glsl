@@ -78,12 +78,25 @@
                 teja *= 0.88 + 0.24 * n3(vec3(vWorld.xz * 0.55, seed * 17.0));
                 teja = mix(teja, vec3(0.93, 0.9, 0.83), pretil);
                 if (aguas) {
-                  // chapa de zinc (nueva, gris; vieja, con óxido), teja francesa o paja
+                  // Aurion: teja de barro / pizarra / paja (no zinc industrial)
                   float rt = h11(seed * 4.3), lw = fwidth(alLargo), tw = fwidth(alTraves);
-                  if (est > 7.5) teja = mix(vec3(0.6, 0.5, 0.3), vec3(0.72, 0.62, 0.4), n3(vec3(vWorld.xz * 1.7, seed * 9.0)));
-                  else if (est > 6.5 && rt > 0.55) teja = mix(vec3(0.66, 0.36, 0.24), vec3(0.76, 0.45, 0.3), h11(seed * 9.1)) * (1.0 - 0.16 * (1.0 - smoothstep(0.15 - tw, 0.15 + tw, abs(fract(alTraves / 0.42) - 0.5) * 2.0)) * clamp(1.0 / (tw * 4.0 + 0.5) - 0.3, 0.0, 1.0));
-                  else teja = mix(mix(vec3(0.7, 0.72, 0.72), vec3(0.6, 0.62, 0.63), h11(seed * 9.1)), vec3(0.58, 0.4, 0.3), step(0.62, rt) * (0.35 + 0.5 * n3(vec3(vWorld.xz * 0.4, seed * 5.0)))) * (1.0 - 0.1 * (1.0 - smoothstep(0.3 - lw * 2.0, 0.3 + lw * 2.0, abs(fract(alLargo / 0.8) - 0.5) * 2.0)) * clamp(1.0 / (lw * 2.5 + 0.5) - 0.3, 0.0, 1.0));
-                  teja = mix(teja, teja * 0.62, cumbre);
+                  float hilada = (1.0 - 0.18 * (1.0 - smoothstep(0.15 - tw, 0.15 + tw, abs(fract(alTraves / 0.38) - 0.5) * 2.0)) * clamp(1.0 / (tw * 4.0 + 0.5) - 0.3, 0.0, 1.0));
+                  if (est > 7.5) {
+                    // paja / caña del rancho
+                    teja = mix(vec3(0.55, 0.45, 0.26), vec3(0.72, 0.6, 0.36), n3(vec3(vWorld.xz * 2.1, seed * 9.0)));
+                    teja *= 0.9 + 0.12 * (1.0 - smoothstep(0.2 - lw, 0.2 + lw, abs(fract(alLargo / 0.22) - 0.5) * 2.0));
+                  } else if (est > 6.5) {
+                    // teja curva de orilla
+                    teja = mix(vec3(0.62, 0.3, 0.2), vec3(0.78, 0.42, 0.26), h11(seed * 9.1)) * hilada;
+                  } else if (est > 5.5) {
+                    // pizarra gris-azulada
+                    teja = mix(vec3(0.38, 0.4, 0.44), vec3(0.52, 0.54, 0.58), h11(seed * 9.1)) * hilada;
+                  } else {
+                    // piedra noble / teja oscura del casco
+                    teja = mix(vec3(0.58, 0.28, 0.2), vec3(0.72, 0.4, 0.28), rt) * hilada;
+                    teja = mix(teja, vec3(0.45, 0.42, 0.4), step(0.72, rt) * 0.55);
+                  }
+                  teja = mix(teja, teja * 0.58, cumbre);
                 } else if (mansarda) {
                   float zw = fwidth(vWall.x);
                   vec3 zinc = vec3(0.63, 0.65, 0.66) * (1.0 - 0.1 * (1.0 - smoothstep(0.1 - zw, 0.1 + zw, abs(fract(vWall.x / 0.9) - 0.5) * 2.0)) * clamp(1.0 / (zw * 2.5 + 0.5) - 0.3, 0.0, 1.0));
@@ -208,19 +221,28 @@
                   junta = max(junta, pb * calle * 0.55 * step(2.5, floors));
                   corn *= 0.5;
                 } else if (est < 5.5) {
-                  // ladrillo a la vista, con sus hiladas, y un contrafuerte entre paño y paño
-                  junta = (1.0 - smoothstep(0.1, 0.1 + ay * 3.0, abs(fract(y / 0.3) - 0.5) * 2.0)) * 0.3 * cerca;
-                  junta = max(junta, (1.0 - smoothstep(0.035, 0.035 + ax, min(fx, 1.0 - fx))) * 0.45 * calle);
+                  // sillar / piedra: hiladas + juntas verticales
+                  junta = (1.0 - smoothstep(0.1, 0.1 + ay * 3.0, abs(fract(y / 0.42) - 0.5) * 2.0)) * 0.34 * cerca;
+                  junta = max(junta, (1.0 - smoothstep(0.04, 0.04 + ax, min(fx, 1.0 - fx))) * 0.4 * calle);
+                  junta = max(junta, (1.0 - smoothstep(0.08, 0.08 + ax * bw, abs(fract(x / 0.85) - 0.5) * 2.0)) * 0.22 * cx);
                 } else if (est < 6.5) {
-                  // chapa acanalada, y abajo los pilotes: la casilla va levantada del suelo
-                  float ch = fwidth(x) / 0.16;
-                  junta = (1.0 - smoothstep(0.3 - ch, 0.3 + ch, abs(fract(x / 0.16) - 0.5) * 2.0)) * 0.42 * clamp(1.0 / (ch * 3.0 + 0.4) - 0.5, 0.0, 1.0);
-                  junta = max(junta, (1.0 - smoothstep(0.42, 0.42 + ay, y)) * step(0.22, fract(x / 1.3)) * 0.95);
-                  claro = (1.0 - smoothstep(half1 + 0.03, half1 + 0.03 + ax, dx)) * (smoothstep(y0 - 0.08 - ay, y0 - 0.08 + ay, fy) - smoothstep(y1 + 0.08 - ay, y1 + 0.08 + ay, fy)) * hay * calle * step(0.42, y);
-                  hueco *= step(0.42, y); corn = 0.0;
+                  // tapial / adobe con entramado grueso
+                  junta = (1.0 - smoothstep(0.1, 0.1 + ay * 3.0, abs(fract(y / 0.55) - 0.5) * 2.0)) * 0.28 * cerca;
+                  junta = max(junta, (1.0 - smoothstep(0.05, 0.05 + ax, min(fx, 1.0 - fx))) * 0.5 * calle);
+                  claro = (1.0 - smoothstep(half1 + 0.03, half1 + 0.03 + ax, dx)) * (smoothstep(y0 - 0.08 - ay, y0 - 0.08 + ay, fy) - smoothstep(y1 + 0.08 - ay, y1 + 0.08 + ay, fy)) * hay * calle * 0.35;
                 } else if (est < 7.5) {
-                  junta = (1.0 - smoothstep(0.1, 0.1 + ay * 3.0, abs(fract(y / 0.3) - 0.5) * 2.0)) * 0.26 * cerca * step(h11(seed * 7.3), 0.45);
-                } else corn = 0.0;
+                  // ladrillo de orilla
+                  junta = (1.0 - smoothstep(0.1, 0.1 + ay * 3.0, abs(fract(y / 0.3) - 0.5) * 2.0)) * 0.3 * cerca;
+                  junta = max(junta, (1.0 - smoothstep(0.035, 0.035 + ax, min(fx, 1.0 - fx))) * 0.28 * calle);
+                } else {
+                  // entramado de madera (rancho)
+                  corn = 0.0;
+                  float viga = (1.0 - smoothstep(0.05, 0.05 + ax, min(fx, 1.0 - fx))) * calle;
+                  viga = max(viga, (1.0 - smoothstep(0.06, 0.06 + ay, abs(fract(y / 1.15) - 0.5) * 2.0)) * 0.85 * cerca);
+                  viga = max(viga, (1.0 - smoothstep(0.04, 0.04 + ax * bw, abs(fract(bx) - 0.5) * 2.0)) * 0.55 * cx);
+                  junta = max(junta, viga * 0.7);
+                  claro = max(claro, viga * 0.25);
+                }
               }
               // El aviso pintado en la medianera: las casas altas que asoman sobre las vecinas, algunas, llevan uno
               // arriba: un paño de color con su filete y dos o tres renglones de letras. (vWall.z: el largo del
@@ -255,10 +277,10 @@
                 else if (est < 2.5) muro = mix(vec3(0.87, 0.83, 0.75), vec3(0.76, 0.74, 0.69), r);
                 else if (est < 3.5) muro = r < 0.35 ? vec3(0.9, 0.85, 0.72) : r < 0.65 ? vec3(0.8, 0.79, 0.75) : r < 0.85 ? vec3(0.86, 0.76, 0.6) : vec3(0.92, 0.9, 0.85);
                 else if (est < 4.5) muro = r < 0.4 ? vec3(0.93, 0.92, 0.88) : r < 0.62 ? vec3(0.9, 0.86, 0.76) : r < 0.84 ? vec3(0.79, 0.78, 0.75) : vec3(0.87, 0.79, 0.65);
-                else if (est < 5.5) muro = r < 0.78 ? mix(vec3(0.58, 0.33, 0.24), vec3(0.7, 0.43, 0.31), h11(seed * 3.1)) : vec3(0.75, 0.73, 0.68);
-                else if (est < 6.5) muro = r < 0.17 ? vec3(0.22, 0.38, 0.52) : r < 0.34 ? vec3(0.27, 0.45, 0.33) : r < 0.5 ? vec3(0.82, 0.67, 0.27) : r < 0.64 ? vec3(0.62, 0.26, 0.19) : r < 0.78 ? vec3(0.53, 0.68, 0.72) : r < 0.9 ? vec3(0.62, 0.64, 0.64) : vec3(0.9, 0.88, 0.82);
-                else if (est < 7.5) muro = r < 0.45 ? mix(vec3(0.62, 0.38, 0.27), vec3(0.72, 0.47, 0.33), h11(seed * 3.1)) : r < 0.8 ? vec3(0.76, 0.73, 0.67) : vec3(0.91, 0.89, 0.83);
-                else muro = r < 0.6 ? vec3(0.87, 0.83, 0.75) : vec3(0.69, 0.57, 0.43);
+                else if (est < 5.5) muro = r < 0.55 ? mix(vec3(0.62, 0.58, 0.52), vec3(0.72, 0.68, 0.6), h11(seed * 3.1)) : r < 0.82 ? mix(vec3(0.7, 0.52, 0.38), vec3(0.78, 0.6, 0.44), h11(seed * 4.2)) : vec3(0.78, 0.76, 0.7);
+                else if (est < 6.5) muro = r < 0.5 ? mix(vec3(0.58, 0.54, 0.48), vec3(0.68, 0.64, 0.56), h11(seed * 3.1)) : mix(vec3(0.74, 0.68, 0.55), vec3(0.82, 0.76, 0.62), h11(seed * 4.2));
+                else if (est < 7.5) muro = r < 0.5 ? mix(vec3(0.66, 0.42, 0.3), vec3(0.76, 0.5, 0.36), h11(seed * 3.1)) : r < 0.78 ? mix(vec3(0.74, 0.66, 0.52), vec3(0.82, 0.74, 0.6), h11(seed * 2.7)) : vec3(0.86, 0.8, 0.7);
+                else muro = r < 0.4 ? vec3(0.72, 0.62, 0.46) : r < 0.7 ? vec3(0.62, 0.5, 0.36) : vec3(0.5, 0.38, 0.26);
               }
               // (los edificios con nombre, src/hitos.js, traen su tono en la parte entera de la semilla: blanco, crema,
               // rosa, gris de cemento, terracota o piedra)
@@ -288,9 +310,11 @@
                     : vec3(0.42, 0.6, 0.5) * (0.9 + 0.16 * n3(vWorld * 0.8));
                 }
               } else if (kind > 7.5) {
-                // pizarra y tejas
+                // pizarra / sillar macizo (murallas, tejas): sin vanos; si hay tono en la semilla, sillar
                 float tv = vWorld.y / 0.7, tw = fwidth(tv);
-                muro = mix(vec3(0.4, 0.43, 0.47), vec3(0.55, 0.57, 0.6), n3(vWorld * 0.4)) * (1.0 - 0.14 * (1.0 - smoothstep(0.2 - tw, 0.2 + tw, abs(fract(tv) - 0.5) * 2.0)) * clamp(1.0 / (tw + 0.5) - 0.4, 0.0, 1.0));
+                float hil = (1.0 - 0.14 * (1.0 - smoothstep(0.2 - tw, 0.2 + tw, abs(fract(tv) - 0.5) * 2.0)) * clamp(1.0 / (tw + 0.5) - 0.4, 0.0, 1.0));
+                if (seed > 1.5) muro = dado * hil;
+                else muro = mix(vec3(0.4, 0.43, 0.47), vec3(0.55, 0.57, 0.6), n3(vWorld * 0.4)) * hil;
               } else if (kind > 6.5) muro = vec3(0.15, 0.12, 0.1);
               else if (kind > 5.5) muro = seed > 1.5 ? dado * 1.03 : vec3(0.92, 0.89, 0.82);
               else {

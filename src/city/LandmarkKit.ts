@@ -142,10 +142,13 @@ export class LandmarkKit {
   }
 
   private kindFor(matKind: string, floors: number, pinta?: number) {
-    // kind = floor(aInfo.y/10): 1 muro · 3 techo · 5 árbol · 9 pintado (PINTA)
+    // kind = floor(aInfo.y/10): 1 muro tipológico (vanos) · 3 techo · 5 árbol ·
+    // 8 pizarra/sillar macizo (sin ventanas) · 9 pintado (PINTA)
     if (matKind === "FOLLAJE") return 50;
     if (pinta != null || matKind === "PINTADO") return 90 + Math.max(1, floors);
     if (matKind === "TINTA") return 10 + Math.max(1, floors);
+    // cortinas / torres: piedra lisa, sin paños de casa
+    if (matKind === "PIZARRA" || matKind === "SILLAR") return 80 + Math.max(1, floors);
     return 10 + Math.max(1, floors);
   }
 

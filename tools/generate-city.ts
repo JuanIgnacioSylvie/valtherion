@@ -1,10 +1,10 @@
 /**
- * Genera una ciudad histórica inventada al completo:
+ * Genera la capital medieval de Aurion:
  * modelo → plano hi-res (tinta) → LOD → packs 3D → overlays → hitos/épocas/geo
  *
  * Uso: pnpm city:generate
  */
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, writeFile, rm, unlink } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
 import { buildCityModel, hash, type CityModel } from "./lib/city-model.ts";
@@ -14,15 +14,24 @@ const OUT_DATOS = path.resolve("public/datos");
 const TILE = 3072;
 const STRIP = 256;
 
+/** Años del motor (LandmarkKit) — títulos de lore medieval. */
 const EPOCAS = [
-  { año: 1867, titulo: "Plano fundacional", corto: "Fundación 1867" },
-  { año: 1888, titulo: "Primer ensanche", corto: "Ensanche 1888", obras: "Quintas que pasan a manzana." },
-  { año: 1895, titulo: "Avenida cívica", corto: "Avenida 1895", obras: "Se abre la avenida norte–sur." },
-  { año: 1905, titulo: "Densificación", corto: "1905" },
-  { año: 1910, titulo: "Centenario", corto: "Centenario 1910", obras: "Plaza del Congreso y teatro nuevo." },
-  { año: 1921, titulo: "Puerto y diagonales", corto: "1921", obras: "Tierra ganada al río." },
-  { año: 1940, titulo: "Ciudad moderna", corto: "1940", obras: "Obelisco y ensanches." },
+  { año: 1867, titulo: "Fundación de Aurion", corto: "Fundación" },
+  { año: 1888, titulo: "Murallas nuevas", corto: "Murallas", obras: "Se cierran los arrabales." },
+  { año: 1895, titulo: "Puerto Real", corto: "Puerto", obras: "Dársena y muelles de piedra." },
+  { año: 1905, titulo: "Barrios altos", corto: "Barrios" },
+  { año: 1910, titulo: "Catedral terminada", corto: "Catedral", obras: "Campanario y claustro." },
+  { año: 1921, titulo: "Astillero real", corto: "Astillero", obras: "Flota mercante del Mar Interior." },
+  { año: 1940, titulo: "Capital coronada", corto: "Capital", obras: "Alcázar ampliado." },
 ];
+
+async function safeUnlink(fp: string) {
+  try {
+    await unlink(fp);
+  } catch {
+    /* */
+  }
+}
 
 function inkPixel(buf: Buffer, W: number, H: number, x: number, y: number, a: number) {
   if (x < 0 || y < 0 || x >= W || y >= H) return;
@@ -177,6 +186,37 @@ function drawStrip(model: CityModel, y0: number, h: number): Buffer {
     }
   }
 
+  // muralla (trazo continuo en tinta, sin cruces)
+  {
+    const [pcx, pcy] = plaza;
+    const rx = model.wallRx;
+    const ry = model.wallRy;
+    let prev: [number, number] | null = null;
+    for (let i = 0; i <= 720; i++) {
+      const a = (i / 720) * Math.PI * 2;
+      const south = Math.abs(((a - Math.PI / 2 + Math.PI) % (Math.PI * 2)) - Math.PI);
+      if (south < 0.72) {
+        prev = null;
+        continue;
+      }
+      const wobble = 1 + 0.035 * Math.sin(a * 3 + seed);
+      const x = Math.round(pcx + Math.cos(a) * rx * wobble);
+      const y = Math.round(pcy + Math.sin(a) * ry * wobble);
+      if (prev) {
+        const steps = Math.max(1, Math.hypot(x - prev[0], y - prev[1]));
+        for (let s = 0; s <= steps; s++) {
+          const t = s / steps;
+          const xi = Math.round(prev[0] + (x - prev[0]) * t);
+          const yi = Math.round(prev[1] + (y - prev[1]) * t);
+          ink(xi, yi, 0.95);
+          ink(xi + 1, yi, 0.7);
+          ink(xi, yi + 1, 0.7);
+        }
+      }
+      prev = [x, y];
+    }
+  }
+
   // costa + oleaje
   for (let x = marco[0]; x < marco[2]; x++) {
     const cy = Math.round(coastY(x));
@@ -280,6 +320,13 @@ async function writePlano(model: CityModel) {
     .webp({ quality: 82, effort: 4 })
     .toFile(path.join(OUT_PLANO, "medio.webp"));
 
+  // Sustituye el medio-4k BA para que el runtime no cargue el Glade viejo
+  await sharp(path.join(OUT_PLANO, "source.webp"))
+    .resize(4096, 4096, { fit: "inside" })
+    .grayscale()
+    .webp({ quality: 84, effort: 4 })
+    .toFile(path.join(OUT_PLANO, "medio-4k.webp"));
+
   await sharp(path.join(OUT_PLANO, "chico.webp"))
     .resize(1024, 1024, { fit: "inside" })
     .webp({ quality: 72 })
@@ -291,9 +338,12 @@ async function writeTiles(model: CityModel) {
   const cols = Math.ceil(W / TILE);
   const rows = Math.ceil(H / TILE);
   const dir = path.join(OUT_PLANO, "tiles");
+  const fine = path.join(OUT_PLANO, "f");
   await rm(dir, { recursive: true, force: true });
+  await rm(fine, { recursive: true, force: true });
   await mkdir(dir, { recursive: true });
-  console.log(`Teselas ${TILE} → ${cols}×${rows}`);
+  await mkdir(fine, { recursive: true });
+  console.log(`Teselas ${TILE} → ${cols}×${rows} (tiles/ + f/)`);
 
   const src = path.join(OUT_PLANO, "source.webp");
   for (let row = 0; row < rows; row++) {
@@ -302,11 +352,14 @@ async function writeTiles(model: CityModel) {
       const top = row * TILE;
       const width = Math.min(TILE, W - left);
       const height = Math.min(TILE, H - top);
-      await sharp(src)
+      const buf = await sharp(src)
         .extract({ left, top, width, height })
         .grayscale()
         .webp({ quality: 84, effort: 3 })
-        .toFile(path.join(dir, `${col}_${row}.webp`));
+        .toBuffer();
+      await writeFile(path.join(dir, `${col}_${row}.webp`), buf);
+      // runtime fine zoom: plano/f/{col}-{row}.webp
+      await writeFile(path.join(fine, `${col}-${row}.webp`), buf);
     }
     process.stdout.write(`  fila ${row + 1}/${rows}\r`);
   }
@@ -319,18 +372,59 @@ async function writeTiles(model: CityModel) {
 
 async function writePacks(model: CityModel) {
   const { buildings, trees, W, H, metro, plaza, marco, blocks } = model;
-  const techoBuf = Buffer.alloc(buildings.length * 7 * 4);
+  // techos: Float32[px,py,w_px,d_px,h_m,yaw,seed,et] — mismo stride que BA
+  const techoBuf = Buffer.alloc(buildings.length * 8 * 4);
   buildings.forEach((t, i) => {
-    const o = i * 28;
+    const o = i * 32;
     techoBuf.writeFloatLE(t.x + t.w / 2, o);
     techoBuf.writeFloatLE(t.y + t.d / 2, o + 4);
     techoBuf.writeFloatLE(t.w, o + 8);
     techoBuf.writeFloatLE(t.d, o + 12);
-    techoBuf.writeFloatLE(t.h, o + 16);
-    techoBuf.writeFloatLE(t.seed, o + 20);
-    techoBuf.writeFloatLE(t.et, o + 24);
+    techoBuf.writeFloatLE(Math.max(2.4, t.h), o + 16);
+    techoBuf.writeFloatLE(0, o + 20); // yaw
+    techoBuf.writeFloatLE(t.seed, o + 24);
+    techoBuf.writeFloatLE(t.et, o + 28);
   });
   await writeFile(path.join(OUT_DATOS, "techos.pak"), techoBuf);
+
+  // muros: Float32[px,py,len_m,height_m,y0_m,yaw,seed,et] — 4 lados por casa
+  const muroBuf = Buffer.alloc(buildings.length * 4 * 8 * 4);
+  let muroN = 0;
+  const pushMuro = (
+    px: number,
+    py: number,
+    lenM: number,
+    height: number,
+    yaw: number,
+    seed: number,
+    et: number,
+  ) => {
+    const len = Math.max(0.35, Math.min(60, lenM));
+    const h = Math.max(0.4, Math.min(40, height));
+    const o = muroN * 32;
+    muroBuf.writeFloatLE(px, o);
+    muroBuf.writeFloatLE(py, o + 4);
+    muroBuf.writeFloatLE(len, o + 8);
+    muroBuf.writeFloatLE(h, o + 12);
+    muroBuf.writeFloatLE(0, o + 16); // y0
+    muroBuf.writeFloatLE(yaw, o + 20);
+    muroBuf.writeFloatLE(seed, o + 24);
+    muroBuf.writeFloatLE(et, o + 28);
+    muroN++;
+  };
+  for (const t of buildings) {
+    const cx = t.x + t.w / 2;
+    const cy = t.y + t.d / 2;
+    const wM = t.w * metro;
+    const dM = t.d * metro;
+    const h = Math.max(2.4, t.h);
+    // yaw = atan2(dx,dz): eje local Z del box alineado al borde
+    pushMuro(cx, cy - t.d / 2, wM, h, Math.PI / 2, t.seed, t.et); // norte (corre en +X)
+    pushMuro(cx, cy + t.d / 2, wM, h, Math.PI / 2, t.seed, t.et); // sur
+    pushMuro(cx - t.w / 2, cy, dM, h, 0, t.seed, t.et); // oeste (corre en +Z)
+    pushMuro(cx + t.w / 2, cy, dM, h, 0, t.seed, t.et); // este
+  }
+  await writeFile(path.join(OUT_DATOS, "muros.pak"), muroBuf.subarray(0, muroN * 32));
 
   const arbBuf = Buffer.alloc(trees.length * 16);
   trees.forEach((a, i) => {
@@ -347,22 +441,35 @@ async function writePacks(model: CityModel) {
     manzanas: blocks.length,
     techos: buildings.length,
     arboles: trees.length,
-    muros: buildings.length * 4,
+    muros: muroN,
     etapas: EPOCAS.length - 1,
     synthetic: true,
-    nombre: "Ciudad del Plano",
+    nombre: model.nombre,
+    wallRx: model.wallRx,
+    wallRy: model.wallRy,
+    settlement: model.settlement,
   };
   await writeFile(path.join(OUT_DATOS, "ciudad.json"), JSON.stringify(ciudad, null, 2));
   await writeFile(path.join(OUT_DATOS, "epocas.json"), JSON.stringify({ epocas: EPOCAS }, null, 2));
   await writeFile(path.join(OUT_DATOS, "hoy.json"), JSON.stringify(model.landmarks, null, 2));
 
+  // Vaciar packs BA que el runtime mezclaría con Aurion (no tocar muros/techos de Aurion)
+  await writeFile(path.join(OUT_DATOS, "fl.json"), "[]\n");
+  await writeFile(path.join(OUT_DATOS, "calles.json"), "{\"calles\":[]}\n");
+  await safeUnlink(path.join(OUT_DATOS, "crece.pak"));
+  await safeUnlink(path.join(OUT_DATOS, "crece.json"));
+  await safeUnlink(path.join(OUT_DATOS, "patios.pak"));
+  await safeUnlink(path.join(OUT_DATOS, "calles.bin"));
+  // relieve.bin de BA desplaza mal las casas sintéticas
+  await safeUnlink(path.join(OUT_DATOS, "relieve.bin"));
+
   const geo = {
-    origen: { lat: -34.6083, lon: -58.3722 },
-    mLat: 110940,
-    mLon: 111320 * Math.cos((-34.6083 * Math.PI) / 180),
-    A: [plaza[0], -80 * (W / 18919), 980 * (W / 18919)],
-    B: [plaza[1], 980 * (H / 13272), 70 * (H / 13272)],
-    nota: "Georref aproximada (ciudad sintética anclada a Plaza de Mayo).",
+    origen: { lat: 0, lon: 0 },
+    mLat: 111320,
+    mLon: 111320,
+    A: [plaza[0], 0, 1],
+    B: [plaza[1], 1, 0],
+    nota: "Ciudad sintética — Aurion (sin georref real).",
   };
   await writeFile(path.join(OUT_DATOS, "geo.json"), JSON.stringify(geo, null, 2));
 }
@@ -473,24 +580,26 @@ async function bakeOverlays(model: CityModel) {
     }
   }
 
-  await sharp(cerca, { raw: { width: ow, height: oh, channels: 3 } })
-    .webp({ quality: 82 })
-    .toFile(path.join(OUT_PLANO, "hoy-cerca.webp"));
-  await sharp(lejos, { raw: { width: ow, height: oh, channels: 3 } })
-    .webp({ quality: 82 })
-    .toFile(path.join(OUT_PLANO, "hoy-lejos.webp"));
-  await sharp(creceBuf, { raw: { width: cw, height: ch, channels: 3 } })
-    .webp({ quality: 82 })
-    .toFile(path.join(OUT_PLANO, "crece.webp"));
-  await sharp(desBuf, { raw: { width: cw, height: ch, channels: 3 } })
-    .webp({ quality: 82 })
-    .toFile(path.join(OUT_PLANO, "despeje.webp"));
-  await sharp(callesBuf, { raw: { width: cw, height: ch, channels: 3 } })
-    .webp({ quality: 82 })
-    .toFile(path.join(OUT_PLANO, "calles.webp"));
-  await sharp(sueloBuf, { raw: { width: cw, height: ch, channels: 3 } })
-    .webp({ quality: 82 })
-    .toFile(path.join(OUT_PLANO, "suelo.webp"));
+  const writeOverlay = async (name: string, buf: Buffer, w: number, h: number, ch = 3) => {
+    const img = sharp(buf, { raw: { width: w, height: h, channels: ch as 1 | 3 } }).webp({
+      quality: 82,
+    });
+    await img.toFile(path.join(OUT_PLANO, `${name}.webp`));
+    // variantes -2k que el runtime prefiere sobre BA viejo
+    if (ch === 3) {
+      await sharp(buf, { raw: { width: w, height: h, channels: 3 } })
+        .resize(2048, 2048, { fit: "inside" })
+        .webp({ quality: 82 })
+        .toFile(path.join(OUT_PLANO, `${name}-2k.webp`));
+    }
+  };
+
+  await writeOverlay("hoy-cerca", cerca, ow, oh);
+  await writeOverlay("hoy-lejos", lejos, ow, oh);
+  await writeOverlay("crece", creceBuf, cw, ch);
+  await writeOverlay("despeje", desBuf, cw, ch);
+  await writeOverlay("calles", callesBuf, cw, ch);
+  await writeOverlay("suelo", sueloBuf, cw, ch);
   await sharp(relBuf, { raw: { width: cw, height: ch, channels: 1 } })
     .webp({ quality: 82 })
     .toFile(path.join(OUT_PLANO, "relieve.webp"));
@@ -520,11 +629,14 @@ async function main() {
     path.join(OUT_DATOS, "city-meta.json"),
     JSON.stringify(
       {
-        nombre: "Ciudad del Plano",
+        nombre: model.nombre,
         W: model.W,
         H: model.H,
         metro: model.metro,
         plaza: model.plaza,
+        wallRx: model.wallRx,
+        wallRy: model.wallRy,
+        settlement: model.settlement,
         generatedAt: new Date().toISOString(),
       },
       null,
@@ -532,7 +644,7 @@ async function main() {
     ),
   );
 
-  console.log("OK. pnpm dev");
+  console.log(`OK — ${model.nombre}. pnpm dev`);
 }
 
 main().catch((e) => {

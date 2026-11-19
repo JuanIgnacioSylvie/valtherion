@@ -1,9 +1,9 @@
 {
-  "name": "baires-garden",
+  "name": "valtherion",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Buenos Aires 1867–1940: reconstrucción 3D del plano de Carlos Glade",
+  "description": "Valtherion — maqueta 3D de Aurion (capital medieval)",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

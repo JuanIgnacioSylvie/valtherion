@@ -20,11 +20,11 @@ export type LaminasMeta = {
   rows: number;
 };
 
-/** Meta de referencia del original (hasta tener extract propio). */
+/** Fallback si no carga ciudad.json — Aurion ciudad grande ~4096×3072. */
 export const GLADE_REF: PlanoMeta = {
-  ancho: 18919,
-  alto: 13272,
-  metro: 0.675,
-  plaza: [10335, 9485],
-  marco: [1300, 1250, 18180, 12510],
+  ancho: 4096,
+  alto: 3072,
+  metro: 1350 / (2 * 4096 * 0.3),
+  plaza: [2048, 1475],
+  marco: [164, 154, 3932, 2950],
 };

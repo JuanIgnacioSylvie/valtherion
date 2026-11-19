@@ -99,7 +99,8 @@ export function buildCityBatch(
     const est = estiloDe(x, z, et | 0, floors, seed * 65535);
     const pitched = est >= 5;
     const roofY = Math.max(2.6, hMax);
-    const roofH = pitched ? Math.max(1.1, Math.min(4.5, hMax * 0.18)) : 0.28;
+    const span = Math.min(w, d);
+    const roofH = pitched ? Math.max(2.4, Math.min(6.5, span * 0.5)) : 0.28;
     const distEnc = encodeDist(dist, et, death);
     const info: [number, number, number, number] = [seed, 30 + floors, hMax, distEnc];
     const ancla: [number, number, number] = [x, z, 1];

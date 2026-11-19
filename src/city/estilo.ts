@@ -13,6 +13,17 @@ export const Estilo = {
 
 export type EstiloId = (typeof Estilo)[keyof typeof Estilo];
 
+/** Aurion usa paleta medieval (techos a dos aguas + piedra/ladrillo). */
+let mode: "baires" | "medieval" = "medieval";
+
+export function setEstiloMode(m: "baires" | "medieval") {
+  mode = m;
+}
+
+export function getEstiloMode() {
+  return mode;
+}
+
 function smooth01(e0: number, e1: number, x: number) {
   const t = Math.min(1, Math.max(0, (x - e0) / Math.max(1e-6, e1 - e0)));
   return t * t * (3 - 2 * t);
@@ -25,9 +36,51 @@ function hash01(n: number) {
 
 /**
  * Estilo según posición en mundo (m desde la plaza), etapa y pisos.
- * Port de Al(e,t,n,r,i) del original.
+ * Port de Al(e,t,n,r,i) del original — o mezcla medieval para Aurion.
  */
 export function estiloDe(
+  wx: number,
+  wz: number,
+  etapa: number,
+  pisos: number,
+  seedU: number,
+): EstiloId {
+  if (mode === "medieval") return estiloMedieval(wx, wz, etapa, pisos, seedU);
+  return estiloBaires(wx, wz, etapa, pisos, seedU);
+}
+
+/** Aurion: galpón/orilla/rancho → techos a dos aguas + ladrillo/piedra/madera. */
+function estiloMedieval(
+  wx: number,
+  wz: number,
+  _etapa: number,
+  pisos: number,
+  seedU: number,
+): EstiloId {
+  const a = Estilo;
+  const s = hash01(seedU * 3 + 2);
+  const o = hash01(seedU * 3 + 1);
+  const dist = Math.hypot(wx, wz);
+  // núcleo cívico: sillar / teja noble
+  if (dist < 180) {
+    if (pisos >= 3) return a.GALPON;
+    return s < 0.7 ? a.GALPON : a.ORILLA;
+  }
+  // casco: piedra + teja + algo de entramado
+  if (dist < 700) {
+    if (pisos >= 3) return a.GALPON;
+    if (s < 0.5) return a.GALPON;
+    if (s < 0.78) return a.ORILLA;
+    return a.RANCHO;
+  }
+  // arrabales / costa: más rancho y orilla
+  if (o > 0.5 && pisos < 2) return a.RANCHO;
+  if (s < 0.35) return a.ORILLA;
+  if (s < 0.78) return a.RANCHO;
+  return a.GALPON;
+}
+
+function estiloBaires(
   wx: number,
   wz: number,
   etapa: number,

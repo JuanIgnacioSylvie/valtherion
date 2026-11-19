@@ -2,38 +2,43 @@
   "epocas": [
     {
       "año": 1867,
-      "titulo": "Plano de Carlos Glade",
-      "corto": "Glade 1867"
+      "titulo": "Fundación de Aurion",
+      "corto": "Fundación"
     },
     {
       "año": 1888,
-      "titulo": "Latzina",
-      "corto": "1888"
+      "titulo": "Murallas nuevas",
+      "corto": "Murallas",
+      "obras": "Se cierran los arrabales."
     },
     {
       "año": 1895,
-      "titulo": "Municipalidad",
-      "corto": "1895"
+      "titulo": "Puerto Real",
+      "corto": "Puerto",
+      "obras": "Dársena y muelles de piedra."
     },
     {
       "año": 1905,
-      "titulo": "Ludwig",
-      "corto": "1905"
+      "titulo": "Barrios altos",
+      "corto": "Barrios"
     },
     {
       "año": 1910,
-      "titulo": "Centenario",
-      "corto": "1910"
+      "titulo": "Catedral terminada",
+      "corto": "Catedral",
+      "obras": "Campanario y claustro."
     },
     {
       "año": 1921,
-      "titulo": "Diagonales",
-      "corto": "1921"
+      "titulo": "Astillero real",
+      "corto": "Astillero",
+      "obras": "Flota mercante del Mar Interior."
     },
     {
       "año": 1940,
-      "titulo": "Ciudad moderna",
-      "corto": "1940"
+      "titulo": "Capital coronada",
+      "corto": "Capital",
+      "obras": "Alcázar ampliado."
     }
   ]
 }

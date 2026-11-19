@@ -1,4 +1,10 @@
-/** Modelo procedural de una ciudad histórica inventada (misma data → plano + 3D). */
+/**
+ * Modelo procedural de Aurion — ciudad grande humana amurallada (D&D 3.5 Cityscape /
+ * Entornos Urbanos). Escala DMG Tabla 5-2: Large City 12.001–25.000 adultos.
+ *
+ * Distritos base (Cityscape cap. 1): cívico, torre del señor, templo, mercado,
+ * residencial medio/alto, guarnición/puertas, almacenes, muelle de pescadores.
+ */
 
 export type Building = {
   x: number;
@@ -26,8 +32,29 @@ export type Landmark = {
   y: number;
   nivel: number;
   nota: string;
+  kind?: string;
   desde?: number;
+  hasta?: number;
   rio?: boolean;
+};
+
+/** Metadatos Cityscape / DMG para Aurion y futuras ciudades. */
+export type SettlementMeta = {
+  /** thorp | hamlet | village | small_town | large_town | small_city | large_city | metropolis */
+  tier: "large_city";
+  /** Adultos (DMG Tabla 5-2). */
+  population: number;
+  gpLimit: number;
+  alignment: string;
+  /** % humano dominante (Cityscape: human-dominated culture). */
+  humanPct: number;
+  walled: boolean;
+  /** Diámetro aprox. de muralla en metros. */
+  wallDiameterM: number;
+  wallHeightM: number;
+  wallThickM: number;
+  districtsTarget: number;
+  source: string;
 };
 
 export type CityModel = {
@@ -40,9 +67,13 @@ export type CityModel = {
   buildings: Building[];
   trees: Tree[];
   landmarks: Landmark[];
-  /** costa: y = f(x) en px */
   coastY: (x: number) => number;
+  harborY: (x: number) => number;
+  wallRx: number;
+  wallRy: number;
   seed: number;
+  nombre: string;
+  settlement: SettlementMeta;
 };
 
 export function hash(x: number, y: number, s = 1) {
@@ -50,191 +81,314 @@ export function hash(x: number, y: number, s = 1) {
   return n - Math.floor(n);
 }
 
+/** Huella orgánica de muralla: óvalo irregular + mordida del puerto al sur. */
+function insideWalls(
+  x: number,
+  y: number,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  seed: number,
+  harborGap = false,
+): boolean {
+  const dx = (x - cx) / rx;
+  const dy = (y - cy) / ry;
+  const ang = Math.atan2(dy, dx);
+  // hueco sur para dársena (Cityscape: puertas/muelles perforan la cortina)
+  if (harborGap && ang > 0.55 && ang < Math.PI - 0.55 && dy > 0.35) {
+    const gap = 1.12 + 0.08 * Math.sin(ang * 2);
+    if (dx * dx + dy * dy < gap * gap) return false;
+  }
+  const wobble =
+    1 +
+    0.07 * Math.sin(ang * 3 + seed) +
+    0.045 * Math.sin(ang * 7 + seed * 0.3) +
+    0.035 * Math.cos(ang * 5);
+  return dx * dx + dy * dy < wobble * wobble;
+}
+
+/**
+ * Aurion — ciudad grande (~18k), humana, amurallada, con puerto.
+ * Lienzo ~2.2×1.7 km; muralla ~1.35 km de diámetro (Comparable a Four Winds / Dragonport).
+ */
 export function buildCityModel(opts?: {
-  /** Ancho del escaneo. Default ~ mitad Glade por velocidad; aún hi-res. */
   W?: number;
   H?: number;
   seed?: number;
 }): CityModel {
-  // Proporción Glade 18919×13272; usamos 12288×8616 (~2/3) = hi-res usable
-  const W = opts?.W ?? 12288;
-  const H = opts?.H ?? 8616;
-  const seed = opts?.seed ?? 1867;
-  // Escala mundo ≈ Glade: ~12.8 km de ancho
-  const metro = (18919 * 0.675) / W;
-  const plaza: [number, number] = [Math.round(W * 0.546), Math.round(H * 0.715)];
+  // hoja compacta (antes 12288×8616 ≈ metrópoli BA)
+  const W = opts?.W ?? 4096;
+  const H = opts?.H ?? 3072;
+  const seed = opts?.seed ?? 4217;
+
+  const wallDiameterM = 1350;
+  const wallRx = W * 0.3;
+  const wallRy = H * 0.34;
+  const metro = wallDiameterM / (2 * wallRx);
+
+  const settlement: SettlementMeta = {
+    tier: "large_city",
+    population: 18420,
+    gpLimit: 40000,
+    alignment: "LN",
+    humanPct: 82,
+    walled: true,
+    wallDiameterM,
+    wallHeightM: 6.5, // ~20 ft (Four Winds)
+    wallThickM: 3.2, // ~10 ft
+    districtsTarget: 40,
+    source: "D&D 3.5 Cityscape / Entornos Urbanos + DMG Tabla 5-2",
+  };
+
+  // Plaza al centro del casco (ligero norte para dejar bahía al sur)
+  const plaza: [number, number] = [Math.round(W * 0.5), Math.round(H * 0.48)];
   const marco: [number, number, number, number] = [
-    Math.round(W * 0.068),
-    Math.round(H * 0.094),
+    Math.round(W * 0.04),
+    Math.round(H * 0.05),
     Math.round(W * 0.96),
-    Math.round(H * 0.943),
+    Math.round(H * 0.96),
   ];
 
+  const [cx, cy] = plaza;
+
+  // Costa al sur con bahía frente al casco
   const coastY = (x: number) => {
-    const t = x / W;
+    const t = (x - cx) / W;
+    const bay = Math.exp(-Math.pow((x - cx) / (W * 0.1), 2));
     return (
-      H * 0.78 +
-      Math.sin(t * 18 + seed) * H * 0.012 +
-      Math.sin(t * 41) * H * 0.006 +
-      Math.sin(t * 7) * H * 0.02
+      H * 0.72 +
+      Math.sin(t * 14 + seed) * H * 0.008 +
+      Math.sin(t * 37) * H * 0.004 -
+      bay * H * 0.048
     );
   };
 
-  const block = Math.max(36, Math.round(W / 140));
+  const harborY = (x: number) => coastY(x) - H * 0.01;
+
   const blocks: Block[] = [];
   const buildings: Building[] = [];
   const trees: Tree[] = [];
 
-  const [cx, cy] = plaza;
-  const margin = Math.round(W * 0.07);
+  // Manzanas radiales compactas (5 anillos: casco denso, no metrópoli)
+  const rings = 5;
+  const rays = 28;
+  const plazaClear = Math.min(W, H) * 0.042;
 
-  for (let gy = margin; gy < H * 0.76; gy += block) {
-    for (let gx = margin; gx < W - margin; gx += block) {
-      const dx = (gx + block / 2 - cx) / W;
-      const dy = (gy + block / 2 - cy) / H;
-      const dist = Math.hypot(dx * 1.35, dy);
-      const jitter = (hash(gx, gy, seed) - 0.5) * block * 0.12;
-      const bx = gx + jitter;
-      const by = gy + (hash(gy, gx, seed) - 0.5) * block * 0.08;
-      const bw = block - 8 - hash(gx + 1, gy, seed) * 4;
-      const bd = block - 8 - hash(gx, gy + 1, seed) * 4;
+  for (let ring = 1; ring <= rings; ring++) {
+    const r0 = plazaClear + (ring - 1) * (wallRx / rings) * (0.88 + hash(ring, seed, 1) * 0.12);
+    const r1 = plazaClear + ring * (wallRx / rings) * (0.9 + hash(ring, seed, 2) * 0.1);
+    const nRay = rays + ring;
+    for (let i = 0; i < nRay; i++) {
+      if (hash(ring, i, seed + 9) > 0.86) continue;
+      const a0 = (i / nRay) * Math.PI * 2 + hash(ring, i, seed) * 0.12;
+      const a1 = ((i + 1) / nRay) * Math.PI * 2 + hash(ring, i + 1, seed) * 0.12;
+      const am = (a0 + a1) * 0.5 + (hash(i, ring, 55) - 0.5) * 0.1;
+      const southBias = 0.86 + 0.28 * Math.max(0, Math.sin(am));
+      const rm = ((r0 + r1) * 0.5 + (hash(i, ring, 56) - 0.5) * (r1 - r0) * 0.3) * southBias;
+      const stretch = wallRy / wallRx;
+      const bx = cx + Math.cos(am) * rm * (0.94 + hash(am, ring, 57) * 0.12);
+      const by = cy + Math.sin(am) * rm * stretch;
+      if (!insideWalls(bx, by, cx, cy, wallRx * 1.02, wallRy * 1.05, seed)) continue;
+      if (by > coastY(bx) - 28) continue;
 
-      // campo / quintas en afueras
-      if (dist > 0.48) continue;
-      if (dist > 0.34 && hash(gx, gy, seed + 2) > 0.45) continue;
-      if (by + bd > coastY(bx + bw / 2) - 20) continue;
-
-      const urban = dist < 0.26 || hash(gx, gy, seed + 3) > 0.35;
-      blocks.push({ x: bx, y: by, w: bw, d: bd, urban });
+      const chord = Math.abs(a1 - a0) * rm;
+      const depth = (r1 - r0) * (0.72 + hash(i, ring, seed) * 0.2);
+      const bw = Math.max(16, chord * 0.78);
+      const bd = Math.max(14, depth * (0.55 + hash(ring, i, 3) * 0.35));
+      const jx = (hash(i, ring, 4) - 0.5) * bw * 0.12;
+      const jy = (hash(ring, i, 5) - 0.5) * bd * 0.12;
+      const x = bx - bw / 2 + jx;
+      const y = by - bd / 2 + jy;
+      const dist = Math.hypot((bx - cx) / wallRx, (by - cy) / wallRy);
+      const urban = dist < 0.92;
+      blocks.push({ x, y, w: bw, d: bd, urban });
 
       if (!urban) {
-        // quinta: un caserón + árboles
         if (hash(bx, by, seed) > 0.4) {
-          const w = bw * (0.25 + hash(bx, by, 4) * 0.2);
-          const d = bd * (0.2 + hash(by, bx, 5) * 0.2);
           buildings.push({
-            x: bx + bw * 0.3,
-            y: by + bd * 0.3,
-            w,
-            d,
-            h: 5 + hash(bx, by, 6) * 4,
+            x: x + bw * 0.25,
+            y: y + bd * 0.25,
+            w: bw * 0.32,
+            d: bd * 0.28,
+            h: 3.6 + hash(bx, by, 6) * 2.4,
             seed: hash(bx, by, 7),
-            et: hash(bx, by, 8) > 0.7 ? 1 + Math.floor(hash(by, bx, 9) * 4) : 0,
+            et: 0,
           });
         }
-        for (let i = 0; i < 4 + Math.floor(hash(bx, by, 10) * 6); i++) {
+        for (let t = 0; t < 2 + Math.floor(hash(bx, by, 10) * 3); t++) {
           trees.push({
-            x: bx + 8 + hash(bx + i, by, 11) * (bw - 16),
-            y: by + 8 + hash(by + i, bx, 12) * (bd - 16),
-            r: 3 + hash(i, bx, 13) * 5,
-            seed: hash(i, by, 14),
+            x: x + 3 + hash(bx + t, by, 11) * (bw - 6),
+            y: y + 3 + hash(by + t, bx, 12) * (bd - 6),
+            r: 2.5 + hash(t, bx, 13) * 3,
+            seed: hash(t, by, 14),
           });
         }
         continue;
       }
 
-      // manzana urbana: parcelas
-      const dens = dist < 0.1 ? 0.92 : dist < 0.18 ? 0.72 : 0.48;
-      const cellsX = 2 + Math.floor(hash(gx, gy, 20) * 3);
-      const cellsY = 2 + Math.floor(hash(gy, gx, 21) * 3);
-      const cw = (bw - 4) / cellsX;
-      const ch = (bd - 4) / cellsY;
-      const pad = 1.5;
-
+      // parcelas casi cuadradas, densas cerca de la plaza
+      const dens = dist < 0.22 ? 0.95 : dist < 0.45 ? 0.86 : 0.72;
+      const target = Math.max(14, Math.min(bw, bd, 28));
+      const cellsX = Math.max(1, Math.round(bw / target));
+      const cellsY = Math.max(1, Math.round(bd / target));
+      const cw = (bw - 3) / cellsX;
+      const ch = (bd - 3) / cellsY;
       for (let iy = 0; iy < cellsY; iy++) {
         for (let ix = 0; ix < cellsX; ix++) {
-          if (hash(gx + ix * 19, gy + iy * 17, seed) > dens) continue;
-          const w = cw * (0.62 + hash(ix, iy + gx, 22) * 0.32) - pad;
-          const d = ch * (0.62 + hash(iy, ix + gy, 23) * 0.32) - pad;
-          const x = bx + 2 + ix * cw + (cw - w) * 0.5;
-          const y = by + 2 + iy * ch + (ch - d) * 0.5;
+          if (hash(i + ix * 19, ring + iy * 17, seed) > dens) continue;
+          const fill = 0.58 + hash(ix, iy + i, 22) * 0.24;
+          const m = Math.min(cw, ch) * fill;
+          const w = Math.max(6, Math.min(22, m * (0.9 + hash(ix, ring, 23) * 0.22)));
+          const d = Math.max(6, Math.min(22, m * (0.9 + hash(iy, i, 24) * 0.22)));
+          const px = x + 1.5 + ix * cw + Math.max(1.2, (cw - w) * 0.5);
+          const py = y + 1.5 + iy * ch + Math.max(1.2, (ch - d) * 0.5);
+          const h =
+            3.5 +
+            hash(px, py, 28) * (dist < 0.16 ? 4.8 : dist < 0.38 ? 3.2 : 2.2) +
+            (dist < 0.09 && hash(px, py, 29) > 0.84 ? 2.2 : 0);
           let et = 0;
-          if (dist > 0.16 && hash(x, y, 24) > 0.5) et = 1 + Math.floor(hash(y, x, 25) * 5);
-          if (dist > 0.28 && hash(x, y, 26) > 0.35) et = 2 + Math.floor(hash(y, x, 27) * 4);
+          if (dist > 0.55 && hash(px, py, 26) > 0.55) et = 1 + Math.floor(hash(py, px, 27) * 3);
           buildings.push({
-            x,
-            y,
-            w: Math.max(4, w),
-            d: Math.max(4, d),
-            h: 4 + hash(x, y, 28) * (dist < 0.12 ? 12 : dist < 0.2 ? 8 : 5),
-            seed: hash(x, y, 29),
+            x: px,
+            y: py,
+            w,
+            d,
+            h,
+            seed: hash(px, py, 30),
             et,
           });
         }
       }
 
-      // árboles de patio
-      const nTree = Math.floor(hash(gx, gy, 30) * (dist < 0.2 ? 5 : 2));
-      for (let i = 0; i < nTree; i++) {
+      const nTree = Math.floor(hash(i, ring, 31) * (dist < 0.3 ? 3 : 1.5));
+      for (let t = 0; t < nTree; t++) {
         trees.push({
-          x: bx + 6 + hash(gx + i, gy, 31) * (bw - 12),
-          y: by + 6 + hash(gy + i, gx, 32) * (bd - 12),
-          r: 2.5 + hash(i, gx, 33) * 4,
-          seed: hash(i, gy, 34),
+          x: x + 3 + hash(i + t, ring, 32) * (bw - 6),
+          y: y + 3 + hash(ring + t, i, 33) * (bd - 6),
+          r: 2 + hash(t, i, 34) * 3,
+          seed: hash(t, ring, 35),
         });
       }
     }
   }
 
-  // avenida norte-sur que nace en 1895 (despeje): marcar edificios cercanos a demolición vía et alta + landmark
-  const avX = cx;
-  for (const b of buildings) {
-    if (Math.abs(b.x + b.w / 2 - avX) < 14 && b.y < cy - 40) {
-      // sobreviven pocos; el resto “se demuele” en etapa 2 visualmente vía despeje bake
-    }
+  // Árboles de la plaza
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    trees.push({
+      x: cx + Math.cos(a) * plazaClear * 0.7,
+      y: cy + Math.sin(a) * plazaClear * 0.55,
+      r: 3.2 + hash(i, seed, 40) * 2.4,
+      seed: hash(i, seed, 41),
+    });
+  }
+
+  // Franja del puerto: warehouse + fishers' wharf (Cityscape)
+  const portX = cx;
+  const portY = Math.round(coastY(portX) - 8);
+  for (let i = -8; i <= 8; i++) {
+    const x = portX + i * 32 + (hash(i, seed, 60) - 0.5) * 8;
+    const y = coastY(x) - 42 - hash(i, seed, 61) * 28;
+    if (hash(i, seed, 62) < 0.18) continue;
+    if (!insideWalls(x, y, cx, cy, wallRx * 1.08, wallRy * 1.1, seed)) continue;
+    const w = 12 + hash(i, seed, 63) * 16;
+    const d = 9 + hash(i, seed, 64) * 12;
+    buildings.push({
+      x: x - w / 2,
+      y: y - d / 2,
+      w,
+      d,
+      h: 3.8 + hash(i, seed, 65) * 4.5,
+      seed: hash(i, seed, 66),
+      et: 0,
+    });
+    blocks.push({ x: x - w / 2 - 3, y: y - d / 2 - 3, w: w + 6, d: d + 6, urban: true });
   }
 
   const landmarks: Landmark[] = [
-    { nombre: "Plaza Mayor", x: cx, y: cy, nivel: 1, nota: "El corazón del plano." },
-    { nombre: "Cabildo", x: cx - W * 0.012, y: cy - H * 0.004, nivel: 1, nota: "Fachada a la plaza." },
-    { nombre: "Catedral", x: cx + W * 0.014, y: cy - H * 0.003, nivel: 1, nota: "Torre a la vista." },
-    { nombre: "Mercado", x: cx - W * 0.04, y: cy - H * 0.08, nivel: 2, nota: "Puestos y carretas." },
     {
-      nombre: "Estación del Parque",
-      x: cx + W * 0.06,
-      y: cy - H * 0.09,
+      nombre: "Plaza Mayor",
+      x: cx,
+      y: cy,
+      nivel: 1,
+      nota: "Distrito cívico: mercado, pregón y justicia.",
+      kind: "plaza",
+    },
+    {
+      nombre: "Alcázar Real",
+      x: Math.round(cx - W * 0.028),
+      y: Math.round(cy - H * 0.02),
+      nivel: 1,
+      nota: "Torre del señor / keep (Cityscape: Lord's Keep).",
+      kind: "alcazar",
+    },
+    {
+      nombre: "Catedral de Aurion",
+      x: Math.round(cx + W * 0.032),
+      y: Math.round(cy - H * 0.014),
+      nivel: 1,
+      nota: "Distrito de templo.",
+      kind: "catedral",
+    },
+    {
+      nombre: "Mercado Cubierto",
+      x: Math.round(cx - W * 0.045),
+      y: Math.round(cy + H * 0.016),
       nivel: 2,
-      nota: "Cabecera del ferrocarril.",
+      nota: "Marketplace: granos y especias del Mar Interior.",
+      kind: "mercado",
     },
     {
-      nombre: "Aduana",
-      x: cx + W * 0.02,
-      y: cy + H * 0.035,
+      nombre: "Puerta del Norte",
+      x: Math.round(cx),
+      y: Math.round(cy - wallRy),
       nivel: 2,
-      nota: "Junto a la barranca.",
+      nota: "Guarnición y camino real hacia Lexmara.",
+      kind: "puerta",
     },
     {
-      nombre: "Obelisco",
-      x: cx + W * 0.04,
-      y: cy - H * 0.11,
-      nivel: 1,
-      nota: "Obra de 1936.",
-      desde: 1940,
+      nombre: "Puerta del Este",
+      x: Math.round(cx + wallRx * 0.9),
+      y: Math.round(cy),
+      nivel: 2,
+      nota: "Salida de caravanas.",
+      kind: "puerta_este",
     },
     {
-      nombre: "Congreso",
-      x: cx - W * 0.005,
-      y: cy - H * 0.2,
-      nivel: 1,
-      nota: "Desde el Centenario.",
-      desde: 1910,
+      nombre: "Muralla",
+      x: Math.round(cx + wallRx * 0.78),
+      y: Math.round(cy - wallRy * 0.2),
+      nivel: 2,
+      nota: `Cortina ~${settlement.wallHeightM} m / ${settlement.wallThickM} m (Four Winds).`,
+      kind: "muralla",
     },
     {
-      nombre: "Puerto Nuevo",
-      x: cx + W * 0.01,
-      y: cy + H * 0.09,
+      nombre: "Puerto Real",
+      x: Math.round(portX),
+      y: Math.round(portY),
       nivel: 1,
-      nota: "Tierra ganada al río.",
+      nota: "Fisher's Wharf / Waterfront + dársena (Dragonport).",
+      kind: "puerto",
       rio: true,
-      desde: 1921,
     },
     {
-      nombre: "Teatro",
-      x: cx + W * 0.055,
-      y: cy - H * 0.085,
+      nombre: "Muelle Largo",
+      x: Math.round(portX + 55),
+      y: Math.round(coastY(portX + 55) + 18),
       nivel: 2,
-      nota: "Sobre la vieja estación.",
-      desde: 1910,
+      nota: "Embarque de mercantes.",
+      kind: "muelle",
+      rio: true,
+    },
+    {
+      nombre: "Astillero",
+      x: Math.round(portX - 90),
+      y: Math.round(coastY(portX - 90) - 20),
+      nivel: 2,
+      nota: "Warehouse / astillero de ribera.",
+      kind: "astillero",
+      rio: true,
     },
   ];
 
@@ -249,6 +403,11 @@ export function buildCityModel(opts?: {
     trees,
     landmarks,
     coastY,
+    harborY,
+    wallRx,
+    wallRy,
     seed,
+    nombre: "Aurion — Capital",
+    settlement,
   };
 }

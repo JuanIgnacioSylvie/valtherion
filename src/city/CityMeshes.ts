@@ -290,12 +290,17 @@ export class CityMeshes {
       const est = estiloDe(x, z, et | 0, floors, seed * 65535);
       const pitched = est >= 5;
 
+      // cresta sobre el lado corto → pendiente ~45° (más medieval)
+      const ridgeAlongZ = d >= w;
+      const span = Math.max(0.8, ridgeAlongZ ? w : d);
+      const along = Math.max(0.8, ridgeAlongZ ? d : w);
+      const roofYaw = ridgeAlongZ ? yaw : yaw + Math.PI / 2;
       this.dummy.position.set(x, 0, z);
-      this.dummy.rotation.set(0, yaw, 0);
-      this.dummy.scale.set(Math.max(0.8, w), Math.max(2.2, hMax * 0.08), Math.max(0.8, d));
-      // azotea: placa fina arriba del volumen de muros (hMax es altura de techo)
-      this.dummy.position.y = Math.max(2.4, hMax) - 0.15;
-      this.dummy.scale.set(Math.max(0.8, w), pitched ? Math.max(1.2, hMax * 0.22) : 0.35, Math.max(0.8, d));
+      this.dummy.rotation.set(0, pitched ? roofYaw : yaw, 0);
+      const pitchH = pitched ? Math.max(2.6, span * 0.52) : 0.35;
+      const eaves = pitched ? 1.14 : 1;
+      this.dummy.position.y = Math.max(2.4, hMax) - (pitched ? 0.05 : 0.15);
+      this.dummy.scale.set(span * eaves, pitchH, along * eaves);
       this.dummy.updateMatrix();
 
       const infoY = 30 + floors; // kind 3 = techo
@@ -306,7 +311,7 @@ export class CityMeshes {
         this.roofsPitch.setMatrixAt(nPitch, this.dummy.matrix);
         setAttr4(pitchAttrs.aInfo, nPitch, seed, infoY, hMax, distEnc);
         setAttr4(pitchAttrs.aWall, nPitch, aW[0], aW[1], aW[2], aW[3]);
-        setAttr3(pitchAttrs.aAncla, nPitch, 0, 0, 0);
+        setAttr3(pitchAttrs.aAncla, nPitch, x, z, 1);
         pitchAttrs.aEstilo.setX(nPitch, est);
         // ocultar flat
         this.dummy.scale.set(0, 0, 0);
@@ -314,14 +319,14 @@ export class CityMeshes {
         this.roofsFlat.setMatrixAt(i, this.dummy.matrix);
         setAttr4(attrs.aInfo, i, seed, infoY, hMax, distEnc);
         setAttr4(attrs.aWall, i, aW[0], aW[1], aW[2], aW[3]);
-        setAttr3(attrs.aAncla, i, 0, 0, 0);
+        setAttr3(attrs.aAncla, i, x, z, 1);
         attrs.aEstilo.setX(i, est);
         nPitch++;
       } else {
         this.roofsFlat.setMatrixAt(i, this.dummy.matrix);
         setAttr4(attrs.aInfo, i, seed, infoY, hMax, distEnc);
         setAttr4(attrs.aWall, i, aW[0], aW[1], aW[2], aW[3]);
-        setAttr3(attrs.aAncla, i, 0, 0, 0);
+        setAttr3(attrs.aAncla, i, x, z, 1);
         attrs.aEstilo.setX(i, est);
       }
     }
@@ -339,7 +344,8 @@ export class CityMeshes {
       return;
     }
     const attrs = ensureInstAttrs(this.walls, n);
-    const thick = 0.5;
+    // muros más macizos (piedra / adobe)
+    const thick = 1.05;
     for (let i = 0; i < n; i++) {
       const o = i * 8;
       const px = this.muros[o]!;
@@ -358,14 +364,15 @@ export class CityMeshes {
 
       this.dummy.position.set(x, y0, z);
       this.dummy.rotation.set(0, yaw, 0);
-      this.dummy.scale.set(thick, Math.max(0.4, height), Math.max(0.35, len));
+      // alargar un pelo para que cierren en las esquinas
+      this.dummy.scale.set(thick, Math.max(0.4, height), Math.max(0.35, len + thick));
       this.dummy.updateMatrix();
       this.walls.setMatrixAt(i, this.dummy.matrix);
 
       // kind 1 = muro tipológico (fachada con vanos en el shader)
       setAttr4(attrs.aInfo, i, seed, 10 + floors, height, encodeDist(dist, et, death));
       setAttr4(attrs.aWall, i, 0, 0, Math.max(0.35, len), Math.max(0.4, height));
-      setAttr3(attrs.aAncla, i, 0, 0, 0);
+      setAttr3(attrs.aAncla, i, x, z, 1);
       attrs.aEstilo.setX(i, est);
     }
     this.walls.count = n;

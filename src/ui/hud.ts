@@ -1,19 +1,12 @@
 import type { Epoca } from "../epocas/Epocas";
 import type { Modo } from "../modos/Modos";
 
-const WIKI_GLADE =
-  "https://commons.wikimedia.org/wiki/File:Plano_topografico_de_la_Ciudad_de_Buenos_Aires_y_de_todo_su_Municipio_incluyendo_parte_de_los_partidos_de_Belgrano,_San_Jose_de_Flores_y_Barracas_al_Sur_-_levantado_por_el_Departamento_Topografico,_construido_y_dibuj..._-_btv1b53098699s.jpg";
-
-/** Atajos de nivel 1 (referencias) — siempre visibles, como en baires.mormon.garden. */
+/** Atajos de nivel 1 — se reemplazan al cargar hoy.json. */
 export const REFERENCIAS: { nombre: string; x: number; y: number }[] = [
-  { nombre: "Plaza de la Victoria", x: 10344, y: 9484 },
-  { nombre: "Plaza del Parque", x: 11590, y: 8003 },
-  { nombre: "Mercado Constitución", x: 7512, y: 8112 },
-  { nombre: "Mercado 11 de Septiembre", x: 10512, y: 4862 },
-  { nombre: "La Recoleta", x: 13929, y: 7047 },
-  { nombre: "La Boca", x: 5850, y: 11250 },
-  { nombre: "Arroyo Maldonado", x: 16450, y: 3070 },
-  { nombre: "Arroyo Maciel", x: 3050, y: 11900 },
+  { nombre: "Plaza Mayor", x: 6144, y: 4480 },
+  { nombre: "Alcázar Real", x: 5923, y: 4377 },
+  { nombre: "Catedral de Aurion", x: 6390, y: 4411 },
+  { nombre: "Puerto Real", x: 6267, y: 6171 },
 ];
 
 export type HudHandlers = {
@@ -45,7 +38,7 @@ export function createHud(parent: HTMLElement, handlers: HudHandlers): Hud {
   root.id = "hud";
   root.innerHTML = `
     <form id="buscar" role="search">
-      <input type="search" placeholder="Buscá una dirección de hoy: Corrientes 1234" autocomplete="off" />
+      <input type="search" placeholder="Buscá un lugar: Plaza Mayor, Puerto…" autocomplete="off" />
       <button type="submit" class="ir">Buscar</button>
     </form>
     <div id="buscar-msg"></div>
@@ -57,8 +50,8 @@ export function createHud(parent: HTMLElement, handlers: HudHandlers): Hud {
     <div class="anio-sub" id="hud-anio-sub"></div>
     <div id="timeline"></div>
     <div class="titulo">
-      <h1>Buenos Aires — Glade <span id="hud-titulo-anio">1867</span></h1>
-      <p id="hud-blurb">Plano de Carlos Glade (1867) — la tinta del grabado levanta la ciudad 3D.</p>
+      <h1>Aurion — Capital <span id="hud-titulo-anio">1867</span></h1>
+      <p id="hud-blurb">Maqueta de la capital del reino: plaza, casco murado y puerto con flota.</p>
     </div>
     <div class="modos" id="modos">
       <button type="button" data-modo="mapa" class="on">Mapa</button>
@@ -190,41 +183,27 @@ export function createIntro(onEnter?: () => void): IntroApi {
       <div class="texto">
         <div class="cabeza">
           <div>
-            <h2>Buenos Aires, de 1867 a 1940</h2>
-            <p class="bajada">Un plano de hace más de siglo y medio, levantado manzana por manzana, y la ciudad que creció encima.</p>
+            <h2>Aurion, capital del reino</h2>
+            <p class="bajada">Una maqueta sobre la mesa: el plano en tinta levanta el casco murado, la plaza y el puerto.</p>
           </div>
-          <a class="autor" href="https://baires.mormon.garden/" target="_blank" rel="noopener" title="Referencia: baires.mormon.garden">
-            <img src="/autor.webp" alt="" width="44" height="44" />
-            <span><i>Réplica de</i><b>baires.mormon.garden</b></span>
-          </a>
         </div>
         <div class="cols">
           <div>
             <h3>Qué estás viendo</h3>
-            <p>El plano topográfico de la ciudad, obra de Carlos Glade, que el Departamento Topográfico de la provincia publicó en 1867, tendido sobre una mesa. De ese dibujo sale la ciudad que se levanta: las manzanas, lo edificado y los patios, las casillas, las quintas y los árboles están donde el plano los pone.</p>
-            <p>Lo que el plano no dice —dónde termina una casa y empieza la otra, cuántos pisos tenía, cómo era su frente— está completado con las costumbres de la época, y los edificios principales, con fotos tomadas tres años antes.</p>
-            <h3>Y los años que siguen</h3>
-            <p>La ciudad no se queda en 1867. Abajo, la línea de tiempo la lleva a <b>1888, 1895, 1905, 1910, 1921 y 1940</b> (el ▶ los recorre solo). Sobre el mismo plano se levantan las casas que traen los planos de cada año, el río retrocede cuando se hace el puerto, se abren la Avenida de Mayo, las diagonales y la 9 de Julio, y las calles pasan de la tierra al adoquín y al asfalto.</p>
-            <p>Cada año trae sus edificios y sus plazas, hechos a partir de fotos de entonces. Los que tienen etiqueta se pueden tocar. Y se la puede recorrer por adentro: <b>a pie</b>, <b>en avión</b> o <b>manejando</b>, con los botones de abajo.</p>
+            <p>El mismo motor que usábamos para Buenos Aires —mesa, tinta, lift, kit de piezas— pero con el contenido de <b>Aurion</b>: manzanas en anillos irregulares, casas bajas, y hitos hechos a mano.</p>
+            <p>Tocá <b>Ciudad</b> (o espacio) para levantar la maqueta. Abajo, la línea de tiempo recorre etapas del lore (murallas, puerto, catedral…).</p>
           </div>
           <div>
-            <h3>La ciudad en 1867</h3>
-            <p>Tenía unos 180.000 habitantes. Era presidente Bartolomé Mitre y el país estaba en guerra con el Paraguay. Casi todas las casas eran bajas, de azotea y patios: lo más alto eran las torres de las iglesias.</p>
-            <p>El río llegaba al pie de la barranca, por donde hoy corren Paseo Colón y Leandro N. Alem. No había puerto: los barcos fondeaban lejos de la costa y se bajaba a tierra por el muelle de pasajeros o por el de la Aduana Nueva. La Plaza de Mayo eran dos, la de la Victoria y la 25 de Mayo, separadas por la Recova Vieja.</p>
-            <p>El ferrocarril tenía diez años y salía de la Estación del Parque, donde hoy está el Teatro Colón; las calles del centro se alumbraban a gas.</p>
-            <h3>Y la ciudad de hoy</h3>
-            <ul>
-              <li>«Hoy» estampa en rojo, sobre el plano, las calles, las vías y la costa actuales, de <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, © sus colaboradores, licencia ODbL.</li>
-              <li>Arriba a la izquierda podés buscar una dirección actual. La búsqueda usa USIG y Nominatim.</li>
-            </ul>
+            <h3>La capital</h3>
+            <p>En el centro, la <b>Plaza Mayor</b> con el Alcázar y la Catedral. Al sur, el <b>Puerto Real</b>: muelles de madera, aduana y una flota de veleros grandes y botes chicos.</p>
+            <p>La forma no copia Buenos Aires: el casco es ovalado, las calles parten en radios desde la plaza y la bahía muerde la muralla hacia el mar.</p>
           </div>
           <div>
-            <h3>De dónde salen los datos</h3>
+            <h3>Cómo se maneja</h3>
             <ul>
-              <li><a href="${WIKI_GLADE}" target="_blank" rel="noopener"><i>Plano topográfico de la Ciudad de Buenos Aires y de todo su Municipio</i></a>, de Carlos Glade, Departamento Topográfico, 1867. Ejemplar de la Bibliothèque nationale de France, vía Wikimedia Commons; dominio público. <em>Es la única fuente de la forma de la ciudad: calles, manzanas, construcciones y arboledas se leen de ahí.</em></li>
-              <li>Los planos de Latzina (1888), de la Municipalidad (1895), de Pablo Ludwig (1905 y 1910), de Cannizzaro (1921) y de Peuser (1936), calzados sobre el de 1867. <em>De ahí sale lo que la ciudad creció en cada año.</em></li>
-              <li><i>Recuerdos de Buenos Ayres</i>, fotografías de Esteban Gonnet, 1864. <em>Para modelar el Cabildo, la Recova, el primer Teatro Colón y la Aduana.</em></li>
-              <li><i>Buenos-Ayres a vista de pájaro</i>, litografía de J. Dulin. <em>Como referencia del aspecto general y las alturas.</em></li>
+              <li>Arrastrá para moverte, rueda para acercar, botón derecho para girar.</li>
+              <li>Modos <b>caminar</b>, <b>avión</b> y <b>auto</b> para recorrer por dentro.</li>
+              <li>Los nombres de la izquierda saltan a cada hito.</li>
             </ul>
           </div>
         </div>

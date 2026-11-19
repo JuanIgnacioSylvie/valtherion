@@ -1,11 +1,26 @@
 {
-  "nombre": "Ciudad del Plano",
-  "W": 12288,
-  "H": 8616,
-  "metro": 1.0392517089843751,
+  "nombre": "Aurion — Capital",
+  "W": 4096,
+  "H": 3072,
+  "metro": 0.54931640625,
   "plaza": [
-    6709,
-    6160
+    2048,
+    1475
   ],
-  "generatedAt": "2026-11-17T18:07:08.981Z"
+  "wallRx": 1228.8,
+  "wallRy": 1044.48,
+  "settlement": {
+    "tier": "large_city",
+    "population": 18420,
+    "gpLimit": 40000,
+    "alignment": "LN",
+    "humanPct": 82,
+    "walled": true,
+    "wallDiameterM": 1350,
+    "wallHeightM": 6.5,
+    "wallThickM": 3.2,
+    "districtsTarget": 40,
+    "source": "D&D 3.5 Cityscape / Entornos Urbanos + DMG Tabla 5-2"
+  },
+  "generatedAt": "2026-11-18T22:43:39.983Z"
 }
