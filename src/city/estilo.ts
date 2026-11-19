@@ -49,7 +49,12 @@ export function estiloDe(
   return estiloBaires(wx, wz, etapa, pisos, seedU);
 }
 
-/** Aurion: galpón/orilla/rancho → techos a dos aguas + ladrillo/piedra/madera. */
+/**
+ * Aurion medieval:
+ * - mayoría a dos aguas (galpón / orilla / rancho / chapa)
+ * - algunos techos planos (colonial / racional → madera o paja)
+ * - cerca de la plaza: más opulento (piedra/teja, algún comercio)
+ */
 function estiloMedieval(
   wx: number,
   wz: number,
@@ -60,23 +65,35 @@ function estiloMedieval(
   const a = Estilo;
   const s = hash01(seedU * 3 + 2);
   const o = hash01(seedU * 3 + 1);
+  const v = hash01(seedU * 3 + 7);
   const dist = Math.hypot(wx, wz);
-  // núcleo cívico: sillar / teja noble
-  if (dist < 180) {
+
+  // barrio cívico / opulento junto a la plaza
+  if (dist < 160) {
+    if (v < 0.1) return a.ITALIANA; // fachada con molduras
+    if (v < 0.2 && pisos < 3) return a.RACIONAL; // techo plano de madera
     if (pisos >= 3) return a.GALPON;
-    return s < 0.7 ? a.GALPON : a.ORILLA;
+    return s < 0.75 ? a.GALPON : a.ORILLA;
   }
-  // casco: piedra + teja + algo de entramado
+
+  // casco intramuros
   if (dist < 700) {
+    // ~18% techos planos (madera / paja)
+    if (o < 0.18 && pisos <= 2) return v < 0.55 ? a.COLONIAL : a.RACIONAL;
+    if (v < 0.07) return a.ITALIANA;
     if (pisos >= 3) return a.GALPON;
-    if (s < 0.5) return a.GALPON;
-    if (s < 0.78) return a.ORILLA;
-    return a.RANCHO;
+    if (s < 0.42) return a.GALPON;
+    if (s < 0.62) return a.ORILLA;
+    if (s < 0.78) return a.CHAPA; // pizarra / madera
+    return a.RANCHO; // paja
   }
-  // arrabales / costa: más rancho y orilla
-  if (o > 0.5 && pisos < 2) return a.RANCHO;
-  if (s < 0.35) return a.ORILLA;
-  if (s < 0.78) return a.RANCHO;
+
+  // arrabales / costa
+  if (o < 0.22 && pisos < 2) return a.COLONIAL; // plano pobre
+  if (o > 0.55 && pisos < 2) return a.RANCHO;
+  if (s < 0.3) return a.ORILLA;
+  if (s < 0.55) return a.CHAPA;
+  if (s < 0.82) return a.RANCHO;
   return a.GALPON;
 }
 

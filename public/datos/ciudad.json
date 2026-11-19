@@ -14,10 +14,10 @@
       2949
     ]
   },
-  "manzanas": 134,
-  "techos": 1513,
-  "arboles": 75,
-  "muros": 6052,
+  "manzanas": 127,
+  "techos": 1355,
+  "arboles": 72,
+  "muros": 5420,
   "etapas": 6,
   "synthetic": true,
   "nombre": "Aurion — Capital",
@@ -31,8 +31,8 @@
     "humanPct": 82,
     "walled": true,
     "wallDiameterM": 1350,
-    "wallHeightM": 6.5,
-    "wallThickM": 3.2,
+    "wallHeightM": 8.4,
+    "wallThickM": 3.6,
     "districtsTarget": 40,
     "source": "D&D 3.5 Cityscape / Entornos Urbanos + DMG Tabla 5-2"
   }

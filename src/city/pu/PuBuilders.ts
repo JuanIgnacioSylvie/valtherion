@@ -21,6 +21,13 @@ type Ctx = {
   wallRy?: number;
 };
 
+/** Ángulos de las puertas (0 = este, π/2 = sur/puerto, −π/2 = norte). */
+const GATE_N = -Math.PI / 2;
+const GATE_E = 0;
+const GATE_W = Math.PI;
+const GATE_HALF = 0.042; // ~24 m de vano a radio ~575 m
+const HARBOR_HALF = 0.72;
+
 function kit(ctx: Ctx) {
   return new LandmarkKit(ctx.meta, ctx.shared);
 }
@@ -35,10 +42,11 @@ function findHito(ctx: Ctx, kind: string): Hito | undefined {
   return ctx.hitos?.find((h) => (h.kind ?? "").toLowerCase() === kind);
 }
 
-/** Piezas urbanísticas de Aurion: plaza, muralla, puerto. */
+/** Piezas urbanísticas de Aurion: plaza, calles, muralla, puerto. */
 export function buildPuPieces(ctx: Ctx): PuEntry[] {
   const out: PuEntry[] = [];
   plazaMayor(ctx, out);
+  callesPrincipales(ctx, out);
   murallaRing(ctx, out);
   puertoReal(ctx, out);
   return out;
@@ -93,13 +101,63 @@ function plazaMayor(ctx: Ctx, out: PuEntry[]) {
   push(out, k, "plazaMayor");
 }
 
+/** Calle Real: adoquines N→plaza→puerto + cruces E/O hacia las puertas laterales. */
+function callesPrincipales(ctx: Ctx, out: PuEntry[]) {
+  const [cx, cy] = ctx.meta.plaza;
+  const m = ctx.meta.metro;
+  const rx = (ctx.wallRx ?? ctx.meta.ancho * 0.3) * m;
+  const ry = (ctx.wallRy ?? ctx.meta.alto * 0.34) * m;
+  const k = kit(ctx);
+  k.epoca(0);
+  k.lugar(cx, cy, 1, 0);
+
+  // avenida N–S (puerta norte → plaza → puerto)
+  // tapete: shape Y → −Z mundo, así que shapeY = −worldZ
+  const worldN = -ry - 12; // atraviesa la Puerta del Norte
+  const worldS = ry * 0.62;
+  const shapeN = -worldN;
+  const shapeS = -worldS;
+  const avenueLen = Math.abs(shapeN - shapeS);
+  const avenueMid = (shapeN + shapeS) * 0.5;
+  k.tapete(k.recto(14, avenueLen, 0, avenueMid), Pinta.ADOQUIN, {
+    claro: 0.52,
+    alto: 0.14,
+    y: 0.04,
+  });
+  k.tapete(k.recto(1.2, avenueLen, -7.2, avenueMid), Pinta.GRANZA, {
+    claro: 0.45,
+    alto: 0.1,
+    y: 0.02,
+  });
+  k.tapete(k.recto(1.2, avenueLen, 7.2, avenueMid), Pinta.GRANZA, {
+    claro: 0.45,
+    alto: 0.1,
+    y: 0.02,
+  });
+
+  // cruces E–O (shapeY = −worldZ)
+  const crossW = rx * 0.92;
+  k.tapete(k.recto(crossW, 11, 0, 0), Pinta.ADOQUIN, { claro: 0.5, alto: 0.13, y: 0.035 });
+  k.tapete(k.recto(crossW * 0.55, 9, 0, 120), Pinta.ADOQUIN, {
+    claro: 0.48,
+    alto: 0.12,
+    y: 0.03,
+  });
+  k.tapete(k.recto(crossW * 0.45, 9, 0, -140), Pinta.ADOQUIN, {
+    claro: 0.48,
+    alto: 0.12,
+    y: 0.03,
+  });
+
+  push(out, k, "callesPrincipales");
+}
+
 /** Punto del óvalo de muralla en metros mundo (wobble por ángulo). */
 function wallPoint(a: number, rx: number, ry: number): [number, number] {
   const wobble = 1 + 0.035 * Math.sin(a * 3 + 1.2) + 0.02 * Math.cos(a * 5);
   return [Math.cos(a) * rx * wobble, Math.sin(a) * ry * wobble];
 }
 
-/** Distancia angular firmada a un centro (−π..π). */
 function angDist(a: number, center: number) {
   let d = a - center;
   while (d > Math.PI) d -= Math.PI * 2;
@@ -107,31 +165,32 @@ function angDist(a: number, center: number) {
   return d;
 }
 
-/** Hueco sur (puerto) o norte (puerta estrecha). */
+/** Hueco sur (puerto) o puertas N/E/O. */
 function inWallGap(a: number) {
-  if (Math.abs(angDist(a, Math.PI / 2)) < 0.72) return true; // puerto
-  // ~16 m de vano a radio ~575 m
-  if (Math.abs(angDist(a, -Math.PI / 2)) < 0.018) return true;
+  if (Math.abs(angDist(a, Math.PI / 2)) < HARBOR_HALF) return true;
+  if (Math.abs(angDist(a, GATE_N)) < GATE_HALF) return true;
+  if (Math.abs(angDist(a, GATE_E)) < GATE_HALF) return true;
+  if (Math.abs(angDist(a, GATE_W)) < GATE_HALF) return true;
   return false;
 }
 
 /**
- * Muralla continua (Cityscape / Four Winds: ~20 ft × 10 ft).
- * Segmentos que cierran bien + adarve + almenas alineadas + torres en bocas del puerto.
+ * Muralla continua — un poco más alta que Four Winds (~24–26 ft),
+ * con torres de vigilancia y tres puertas (N/E/O) + boca de puerto.
  */
 function murallaRing(ctx: Ctx, out: PuEntry[]) {
   const [cx, cy] = ctx.meta.plaza;
   const m = ctx.meta.metro;
   const rx = (ctx.wallRx ?? ctx.meta.ancho * 0.3) * m;
   const ry = (ctx.wallRy ?? ctx.meta.alto * 0.34) * m;
-  const thick = 3.4;
-  const height = 6.8;
+  const thick = 3.6;
+  const height = 8.4;
   const walk = 0.55;
   const k = kit(ctx);
   k.epoca(0);
   k.lugar(cx, cy, 1, 0);
 
-  const segs = 96;
+  const segs = 112;
   type Seg = { i: number; a0: number; a1: number; x0: number; z0: number; x1: number; z1: number };
   const segsBuilt: Seg[] = [];
 
@@ -151,16 +210,14 @@ function murallaRing(ctx: Ctx, out: PuEntry[]) {
     const dx = s.x1 - s.x0;
     const dz = s.z1 - s.z0;
     const len = Math.hypot(dx, dz);
-    // misma convención que LandmarkKit.cantero: largo en Z local
     const yaw = Math.atan2(dx, dz);
 
-    // SILLAR = piedra maciza (sin vanos de casa)
-    const curtain = new THREE.BoxGeometry(thick, height, len + 0.55);
+    const curtain = new THREE.BoxGeometry(thick, height, len + 0.4);
     curtain.rotateY(yaw);
     curtain.translate(mx, height / 2, mz);
     k.put(curtain, k.SILLAR, { tono: Tono.SILLAR, floors: 1, H: height });
 
-    const walkway = new THREE.BoxGeometry(thick * 0.92, walk, len + 0.55);
+    const walkway = new THREE.BoxGeometry(thick * 0.92, walk, len + 0.4);
     walkway.rotateY(yaw);
     walkway.translate(mx, height + walk / 2, mz);
     k.put(walkway, k.SILLAR, { tono: Tono.SILLAR, H: height + walk });
@@ -176,44 +233,110 @@ function murallaRing(ctx: Ctx, out: PuEntry[]) {
       merlon.translate(bx, height + walk + 0.85, bz);
       k.put(merlon, k.SILLAR, { tono: Tono.SILLAR, H: height + walk + 1.7 });
     }
+
+    // torre de vigilancia cada ~8 segmentos
+    if (s.i % 8 === 0) {
+      putTower(k, mx, mz, height + 4.5, 6.4);
+    }
   }
 
   // torres en bocas del puerto
   for (const sign of [-1, 1] as const) {
-    const a = Math.PI / 2 + sign * 0.72;
+    const a = Math.PI / 2 + sign * HARBOR_HALF;
     const [tx, tz] = wallPoint(a, rx, ry);
-    putTower(k, tx, tz, height + 3.2);
+    putTower(k, tx, tz, height + 5, 7.5);
   }
 
-  // torres flanqueando la Puerta del Norte (tocan el lienzo)
-  for (const sign of [-1, 1] as const) {
-    const a = -Math.PI / 2 + sign * 0.018;
-    const [tx, tz] = wallPoint(a, rx, ry);
-    putTower(k, tx, tz, height + 4);
+  // puertas N / E / O (torres + arco abierto, sin plano que tape el vano)
+  for (const gate of [GATE_N, GATE_E, GATE_W]) {
+    putGate(k, gate, rx, ry, height, thick);
   }
 
   push(out, k, "muralla");
 }
 
-function putTower(k: LandmarkKit, tx: number, tz: number, th: number) {
-  k.caja(7.2, th, 7.2, tx, 0, tz, k.SILLAR, { tono: Tono.SILLAR, floors: 1, H: th });
-  k.caja(8.2, 0.85, 8.2, tx, th, tz, k.SILLAR, { tono: Tono.SILLAR, H: th + 0.85 });
+function putTower(k: LandmarkKit, tx: number, tz: number, th: number, size = 7.2) {
+  k.caja(size, th, size, tx, 0, tz, k.SILLAR, { tono: Tono.SILLAR, floors: 1, H: th });
+  k.caja(size + 1, 0.85, size + 1, tx, th, tz, k.SILLAR, { tono: Tono.SILLAR, H: th + 0.85 });
+  const o = size * 0.35;
   for (const [ox, oz] of [
-    [-2.5, -2.5],
-    [2.5, -2.5],
-    [-2.5, 2.5],
-    [2.5, 2.5],
+    [-o, -o],
+    [o, -o],
+    [-o, o],
+    [o, o],
   ] as [number, number][]) {
-    k.caja(1.6, 1.5, 1.6, tx + ox, th + 0.85, tz + oz, k.SILLAR, {
+    k.caja(1.5, 1.5, 1.5, tx + ox, th + 0.85, tz + oz, k.SILLAR, {
       tono: Tono.SILLAR,
       H: th + 2.4,
     });
   }
 }
 
+/** Puerta: dos torres en los extremos del vano + dintel/arco sin relleno. */
+function putGate(
+  k: LandmarkKit,
+  ang: number,
+  rx: number,
+  ry: number,
+  wallH: number,
+  thick: number,
+) {
+  const [xL, zL] = wallPoint(ang - GATE_HALF, rx, ry);
+  const [xR, zR] = wallPoint(ang + GATE_HALF, rx, ry);
+  const [xM, zM] = wallPoint(ang, rx, ry);
+  const dx = xR - xL;
+  const dz = zR - zL;
+  const span = Math.hypot(dx, dz);
+  const yaw = Math.atan2(dx, dz);
+  const th = wallH + 4.2;
+
+  putTower(k, xL, zL, th, 6.8);
+  putTower(k, xR, zR, th, 6.8);
+
+  // stubs tangentes: desde cada torre hacia afuera del vano (une con la cortina)
+  const txLen = Math.hypot(dx, dz) || 1;
+  const tdx = dx / txLen;
+  const tdz = dz / txLen;
+  const stubLen = 16;
+  for (const [tx, tz, dir] of [
+    [xL, zL, -1],
+    [xR, zR, 1],
+  ] as [number, number, number][]) {
+    const mx = tx + tdx * dir * (stubLen * 0.5);
+    const mz = tz + tdz * dir * (stubLen * 0.5);
+    const stub = new THREE.BoxGeometry(thick, wallH, stubLen);
+    stub.rotateY(yaw);
+    stub.translate(mx, wallH / 2, mz);
+    k.put(stub, k.SILLAR, { tono: Tono.SILLAR, floors: 1, H: wallH });
+  }
+
+  // dintel sobre el vano (hueco libre debajo)
+  const lintelH = 2.4;
+  const archTop = wallH + 0.6;
+  const lintel = new THREE.BoxGeometry(thick + 1.2, lintelH, span * 0.92);
+  lintel.rotateY(yaw);
+  lintel.translate(xM, archTop + lintelH / 2, zM);
+  k.put(lintel, k.SILLAR, { tono: Tono.SILLAR, H: archTop + lintelH });
+
+  // almenas del dintel
+  for (const t of [0.25, 0.5, 0.75]) {
+    const bx = xL + dx * t;
+    const bz = zL + dz * t;
+    const mer = new THREE.BoxGeometry(thick * 0.7, 1.4, 1.8);
+    mer.rotateY(yaw);
+    mer.translate(bx, archTop + lintelH + 0.7, bz);
+    k.put(mer, k.SILLAR, { tono: Tono.SILLAR, H: archTop + lintelH + 1.4 });
+  }
+
+  // umbral de piedra
+  const sill = new THREE.BoxGeometry(thick + 2.5, 0.35, span * 0.95);
+  sill.rotateY(yaw);
+  sill.translate(xM, 0.18, zM);
+  k.put(sill, k.SILLAR, { tono: Tono.SILLAR, H: 0.35 });
+}
+
 /**
- * Puerto Real — dársena al sur de la costa (agua / muelles / flota alineados).
- * Ancla en hoy.json kind=puerto; agua solo hacia +Z (sur).
+ * Puerto Real — dársena orgánica (sin caja celeste), muelles y flota.
  */
 function puertoReal(ctx: Ctx, out: PuEntry[]) {
   const [cx, cy] = ctx.meta.plaza;
@@ -226,10 +349,11 @@ function puertoReal(ctx: Ctx, out: PuEntry[]) {
     k.epoca(0);
     k.lugar(portX, portY, 0, 1);
 
-    // tapete: ExtrudeGeometry+rotateX invierte Y→−Z, así que cz negativo = sur (+Z mundo)
-    k.tapete(k.recto(200, 130, 0, -85), Pinta.AGUA, { claro: 0.4, alto: 0.08, y: -0.45 });
+    // orilla de grava (el mar lo pinta el suelo del plano — sin malla AGUA que armaba el cuadrado celeste)
+    const shore = bayRing(0, -28, 150, 36, 24);
+    k.tapetePlano(shore, Pinta.GRANZA, { claro: 0.4, y: -0.12 });
 
-    // muelles hacia el sur (+Z caja, sin flip)
+    // muelles hacia el sur (+Z caja)
     k.caja(14, 1.2, 95, 0, 0, 48, k.PINTADO, { pinta: [Pinta.MADERA, 0.48], H: 1.2 });
     for (let z = 8; z <= 90; z += 12) {
       k.caja(13, 0.08, 0.35, 0, 1.2, z, k.PINTADO, { pinta: [Pinta.NEGRO, 0.22], H: 1.3 });
@@ -274,4 +398,23 @@ function puertoReal(ctx: Ctx, out: PuEntry[]) {
 
     push(out, k, "puertoFlota");
   }
+}
+
+/** Anillo de bahía irregular en coords de Shape (Y → −Z mundo). */
+function bayRing(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  n = 24,
+): [number, number][] {
+  return Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * Math.PI * 2;
+    const wob =
+      1 +
+      0.12 * Math.sin(a * 2.3 + 0.4) +
+      0.08 * Math.cos(a * 4.1) +
+      0.05 * Math.sin(a * 7);
+    return [cx + Math.cos(a) * rx * wob, cy + Math.sin(a) * ry * wob] as [number, number];
+  });
 }

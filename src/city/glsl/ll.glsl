@@ -114,9 +114,9 @@
     col *= mix(mix(0.74, 0.93, patio), 1.0, papel);
     // el río: barro en suspensión, con el oleaje apenas; y la playa mojada en la orilla
     float ola = n3(vec3(xz.x * 0.018, xz.y * 0.07, 7.0)) * 0.65 + n3(vec3(xz.x * 0.09, xz.y * 0.33, 9.0)) * 0.35;
-    // (el río es marrón, pero menos que la tierra: algo más gris y frío, para que el agua se lea como agua)
-    vec3 agua = mix(vec3(0.37, 0.35, 0.3), vec3(0.57, 0.54, 0.46), ola) * mix(0.93, 1.0, papel);
-    agua = mix(agua, vec3(0.64, 0.63, 0.57), 0.3 * smoothstep(0.5, 0.95, n3(vec3(xz.x * 0.05, xz.y * 0.21, 13.0)) * 0.6 + n3(vec3(xz.x * 0.17, xz.y * 0.6, 14.0)) * 0.4) * smoothstep(0.35, 0.8, ola));
+    // mar/bahía: verde-gris profundo (no celeste ni barro BA)
+    vec3 agua = mix(vec3(0.22, 0.3, 0.3), vec3(0.34, 0.42, 0.4), ola) * mix(0.93, 1.0, papel);
+    agua = mix(agua, vec3(0.4, 0.48, 0.46), 0.22 * smoothstep(0.5, 0.95, n3(vec3(xz.x * 0.05, xz.y * 0.21, 13.0)) * 0.6 + n3(vec3(xz.x * 0.17, xz.y * 0.6, 14.0)) * 0.4) * smoothstep(0.35, 0.8, ola));
     // (la playa es de la costa natural: donde la tierra se le ganó al río hay murallón, no playa)
     col = mix(col, vec3(0.52, 0.45, 0.35), smoothstep(0.1, 0.5, lejos.r) * (1.0 - smoothstep(0.4, 0.6, s.r)) * 0.55 * (1.0 - urb));
     col = mix(col, agua, smoothstep(0.35, 0.65, s.r));

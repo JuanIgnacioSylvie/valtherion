@@ -207,6 +207,26 @@ export class LandmarkKit {
     this.put(geo, this.PINTADO, { pinta: [pintaId, opts.claro ?? 0.7], H: h, floors: 1 });
   }
 
+  /**
+   * Tapete sin caras laterales (ShapeGeometry). Evita el “caja” visible del agua.
+   * Misma convención que tapete: shape Y → −Z mundo tras rotateX.
+   */
+  tapetePlano(
+    ring: [number, number][],
+    pintaId: number,
+    opts: { y?: number; claro?: number } = {},
+  ) {
+    if (ring.length < 3) return;
+    const shape = new THREE.Shape();
+    shape.moveTo(ring[0]![0], ring[0]![1]);
+    for (let i = 1; i < ring.length; i++) shape.lineTo(ring[i]![0], ring[i]![1]);
+    shape.closePath();
+    const geo = new THREE.ShapeGeometry(shape);
+    geo.rotateX(-Math.PI / 2);
+    geo.translate(0, opts.y ?? 0, 0);
+    this.put(geo, this.PINTADO, { pinta: [pintaId, opts.claro ?? 0.7], H: 0.08, floors: 1 });
+  }
+
   /** Rectángulo axis-aligned en local. */
   recto(w: number, d: number, cx = 0, cz = 0): [number, number][] {
     const hw = w / 2;

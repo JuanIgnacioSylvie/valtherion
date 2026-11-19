@@ -36,23 +36,31 @@
     "x": 2048,
     "y": 431,
     "nivel": 2,
-    "nota": "Guarnición y camino real hacia Lexmara.",
+    "nota": "Guarnición y Calle Real hacia Lexmara.",
     "kind": "puerta"
   },
   {
     "nombre": "Puerta del Este",
-    "x": 3154,
+    "x": 3277,
     "y": 1475,
     "nivel": 2,
     "nota": "Salida de caravanas.",
     "kind": "puerta_este"
   },
   {
+    "nombre": "Puerta del Oeste",
+    "x": 819,
+    "y": 1475,
+    "nivel": 2,
+    "nota": "Camino a las aldeas del interior.",
+    "kind": "puerta_oeste"
+  },
+  {
     "nombre": "Muralla",
     "x": 3006,
     "y": 1266,
     "nivel": 2,
-    "nota": "Cortina ~6.5 m / 3.2 m (Four Winds).",
+    "nota": "Cortina ~8.4 m / 3.6 m (Four Winds).",
     "kind": "muralla"
   },
   {

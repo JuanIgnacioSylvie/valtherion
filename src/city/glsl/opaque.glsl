@@ -67,13 +67,19 @@
                 // (los edificios de varios pisos no tienen azotea de baldosa: cemento, o la membrana oscura)
                 if (floors > 3.5 && seed <= 1.5) teja = mix(mix(vec3(0.69, 0.67, 0.62), vec3(0.58, 0.57, 0.55), h11(seed * 5.3)), vec3(0.4, 0.39, 0.38), step(0.8, h11(seed * 7.9)));
                 if (est > 3.5 && est < 4.5) {
-                  // la terraza de los años treinta: cemento, y la casilla del tanque y del ascensor con su sombra
-                  teja = mix(vec3(0.71, 0.69, 0.64), vec3(0.6, 0.59, 0.57), h11(seed * 5.3));
-                  if (min(vWall.z, vWall.w) > 7.0 && floors < 4.5) { // (las de cinco pisos o más la llevan de verdad, src/ciudad.js)
+                  // terraza / techo plano de madera (Aurion) o cemento (BA)
+                  teja = mix(vec3(0.52, 0.4, 0.28), vec3(0.62, 0.5, 0.36), h11(seed * 5.3));
+                  teja *= 0.9 + 0.14 * (1.0 - smoothstep(0.12, 0.2, abs(fract(vWall.x / 0.55) - 0.5) * 2.0));
+                  if (min(vWall.z, vWall.w) > 7.0 && floors < 4.5) {
                     vec2 cq = vWall.zw * (0.5 + 0.3 * (vec2(h11(seed * 2.1), h11(seed * 2.7)) - 0.5)), dq = abs(vWall.xy - cq) - vec2(1.5, 2.0), ds = abs(vWall.xy - cq - vec2(0.9, 0.7)) - vec2(1.5, 2.0);
                     teja = mix(teja, teja * 0.6, 1.0 - smoothstep(0.0, aw + 0.05, max(ds.x, ds.y)));
                     teja = mix(teja, vec3(0.84, 0.82, 0.77), 1.0 - smoothstep(0.0, aw + 0.05, max(dq.x, dq.y)));
                   }
+                } else if (!aguas && !mansarda && est < 1.5) {
+                  // techo plano de paja / tablas (casas bajas)
+                  float rf = h11(seed * 4.1);
+                  if (rf < 0.55) teja = mix(vec3(0.58, 0.48, 0.3), vec3(0.7, 0.58, 0.36), n3(vec3(vWorld.xz * 1.8, seed * 8.0)));
+                  else teja = mix(vec3(0.48, 0.36, 0.24), vec3(0.6, 0.46, 0.32), h11(seed * 6.2)) * (0.92 + 0.1 * n3(vec3(vWorld.xz * 2.2, 3.0)));
                 }
                 teja *= 0.88 + 0.24 * n3(vec3(vWorld.xz * 0.55, seed * 17.0));
                 teja = mix(teja, vec3(0.93, 0.9, 0.83), pretil);
@@ -89,8 +95,9 @@
                     // teja curva de orilla
                     teja = mix(vec3(0.62, 0.3, 0.2), vec3(0.78, 0.42, 0.26), h11(seed * 9.1)) * hilada;
                   } else if (est > 5.5) {
-                    // pizarra gris-azulada
-                    teja = mix(vec3(0.38, 0.4, 0.44), vec3(0.52, 0.54, 0.58), h11(seed * 9.1)) * hilada;
+                    // tablas de madera / pizarra oscura (no celeste)
+                    teja = mix(vec3(0.42, 0.34, 0.26), vec3(0.55, 0.46, 0.36), h11(seed * 9.1)) * hilada;
+                    teja = mix(teja, vec3(0.4, 0.42, 0.43), step(0.65, h11(seed * 2.9)) * 0.55);
                   } else {
                     // piedra noble / teja oscura del casco
                     teja = mix(vec3(0.58, 0.28, 0.2), vec3(0.72, 0.4, 0.28), rt) * hilada;
@@ -150,9 +157,10 @@
                 else if (est < 2.5) { pret = 0.35; bw = 2.3 + 0.5 * e1; medio = 0.19; alf = 0.5; dint = 3.2; pp = 0.2; ciego = 0.04; }
                 else if (est < 3.5) { bw = 3.2 + 0.8 * e1; medio = 0.2; alf = 0.9; dint = 3.1; ciego = 0.05; }
                 else if (est < 4.5) { pret = min(1.0, H * 0.12); bw = 3.3 + 0.9 * e1; medio = 0.33; alf = 1.0; dint = 2.45; pp = 0.25; ciego = 0.0; }
-                else if (est < 5.5) { pret = 0.25; bw = 5.2 + 1.6 * e1; medio = 0.13; alf = 2.5; dint = 3.7; pp = 0.3; ciego = 0.25; mp = 0.34; dp = 3.9; }
-                else if (est < 6.5) { pret = 0.0; bw = 2.6 + 0.7 * e1; medio = 0.15; alf = 1.0; dint = 2.4; ciego = 0.3; dp = 2.5; }
-                else { pret = est < 7.5 ? 0.3 : 0.0; bw = 3.0 + 0.9 * e1; medio = 0.15; alf = 1.0; dint = 2.6; ciego = est < 7.5 ? 0.25 : 0.5; dp = 2.6; }
+                else if (est < 5.5) { pret = 0.35; bw = 2.35 + 0.45 * e1; medio = 0.14; alf = 1.05; dint = 2.35; pp = 0.28; ciego = 0.18; mp = 0.22; dp = 2.7; }
+                else if (est < 6.5) { pret = 0.2; bw = 2.2 + 0.4 * e1; medio = 0.13; alf = 0.95; dint = 2.15; ciego = 0.22; dp = 2.4; }
+                else if (est < 7.5) { pret = 0.25; bw = 2.45 + 0.5 * e1; medio = 0.145; alf = 1.0; dint = 2.25; ciego = 0.2; dp = 2.5; }
+                else { pret = 0.15; bw = 2.6 + 0.55 * e1; medio = 0.12; alf = 0.9; dint = 2.05; ciego = 0.35; dp = 2.3; }
               }
               float fh = (H - pret) / floors, fi = min(floor(y / fh), floors - 1.0), fy = y - fi * fh;
               float bx = x / bw + h11(seed * 5.3), bi = floor(bx), fx = fract(bx);
@@ -296,7 +304,7 @@
                 if (p > 6.5) {
                   float g1 = n3(vec3(vWorld.xz * 0.045, 1.0)) * 0.6 + n3(vec3(vWorld.xz * 0.3, 2.0)) * 0.4, g2 = n3(vec3(vWorld.xz * 1.9, 3.0));
                   muro = p < 7.5 ? mix(vec3(0.3, 0.4, 0.17), vec3(0.45, 0.5, 0.23), g1) * (0.9 + 0.2 * g2)
-                    : p < 8.5 ? mix(vec3(0.3, 0.42, 0.44), vec3(0.45, 0.56, 0.56), n3(vec3(vWorld.xz * 0.6, 4.0)))
+                    : p < 8.5 ? mix(vec3(0.18, 0.28, 0.3), vec3(0.28, 0.38, 0.36), n3(vec3(vWorld.xz * 0.35, 4.0))) * (0.92 + 0.1 * n3(vec3(vWorld.xz * 1.1, 14.0)))
                     : p < 9.5 ? vec3(0.8, 0.775, 0.71) * (0.94 + 0.1 * g2)
                     : p < 10.5 ? mix(vec3(0.7, 0.5, 0.38), vec3(0.78, 0.6, 0.46), g1) * (0.94 + 0.1 * g2)
                     : p < 11.5 ? mix(vec3(0.47, 0.45, 0.42), vec3(0.58, 0.55, 0.5), g1) * (0.9 + 0.2 * g2)

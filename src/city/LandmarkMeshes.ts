@@ -90,7 +90,7 @@ export class LandmarkMeshes {
     this.addAlcazar(shared);
     this.addCatedral(shared);
     this.addMercado(shared);
-    this.addPuertaNorte(shared);
+    // puertas N/E/O las construye murallaRing en PuBuilders (alineadas al óvalo)
   }
 
   private addAlcazar(shared: CityUniforms) {
@@ -186,21 +186,6 @@ export class LandmarkMeshes {
       kit.caja(0.18, 2.6, 0.18, i * 7.5 - 2, 0, 14, kit.PINTADO, { pinta: [Pinta.MADERA, 0.35] });
       kit.caja(0.18, 2.6, 0.18, i * 7.5 + 2, 0, 14, kit.PINTADO, { pinta: [Pinta.MADERA, 0.35] });
     }
-
-    this.entries.push({ root: kit.build(), desde: 1867, hasta: 9999 });
-    this.group.add(kit.group);
-  }
-
-  private addPuertaNorte(shared: CityUniforms) {
-    const h = this.find("puerta");
-    if (!h) return;
-    const kit = new LandmarkKit(this.meta, shared);
-    kit.lugar(h.x, h.y);
-
-    // arco entre las torres de la muralla (las torres las pone PuBuilders)
-    kit.caja(10, 3.2, 6, 0, 7.2, 0, kit.SILLAR, { tono: Tono.SILLAR, H: 10.4 });
-    kit.arqueria(-5, 5, 1, 0, 7.2, 2.8, 6.2, Tono.SILLAR, 5.2, 1.2);
-    kit.caja(14, 0.5, 7, 0, 10.4, 0, kit.SILLAR, { tono: Tono.SILLAR, H: 10.9 });
 
     this.entries.push({ root: kit.build(), desde: 1867, hasta: 9999 });
     this.group.add(kit.group);

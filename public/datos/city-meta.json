@@ -17,10 +17,10 @@
     "humanPct": 82,
     "walled": true,
     "wallDiameterM": 1350,
-    "wallHeightM": 6.5,
-    "wallThickM": 3.2,
+    "wallHeightM": 8.4,
+    "wallThickM": 3.6,
     "districtsTarget": 40,
     "source": "D&D 3.5 Cityscape / Entornos Urbanos + DMG Tabla 5-2"
   },
-  "generatedAt": "2026-11-18T22:43:39.983Z"
+  "generatedAt": "2026-11-19T00:41:47.010Z"
 }

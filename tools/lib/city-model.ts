@@ -135,8 +135,8 @@ export function buildCityModel(opts?: {
     humanPct: 82,
     walled: true,
     wallDiameterM,
-    wallHeightM: 6.5, // ~20 ft (Four Winds)
-    wallThickM: 3.2, // ~10 ft
+    wallHeightM: 8.4, // ~27 ft — cortina + adarve
+    wallThickM: 3.6, // ~12 ft
     districtsTarget: 40,
     source: "D&D 3.5 Cityscape / Entornos Urbanos + DMG Tabla 5-2",
   };
@@ -170,6 +170,33 @@ export function buildCityModel(opts?: {
   const buildings: Building[] = [];
   const trees: Tree[] = [];
 
+  /** Calle Real N–S + cruces E–O: dejar libre de casas. */
+  const onAvenue = (bx: number, by: number) => {
+    const dx = Math.abs(bx - cx);
+    const dy = by - cy;
+    // avenida principal (~14 m ≈ 14/metro px)
+    const aveHalf = Math.max(10, 9 / metro);
+    if (dx < aveHalf && dy > -wallRy * 0.98 && dy < wallRy * 0.62) return true;
+    // cruces E–O
+    if (Math.abs(dy) < aveHalf * 0.85 && dx < wallRx * 0.95) return true;
+    if (Math.abs(dy + wallRy * 0.22) < aveHalf * 0.7 && dx < wallRx * 0.55) return true;
+    if (Math.abs(dy - wallRy * 0.26) < aveHalf * 0.7 && dx < wallRx * 0.45) return true;
+    return false;
+  };
+
+  /** Huecos de puertas (N/E/O) sin manzanas pegadas. */
+  const nearGate = (bx: number, by: number) => {
+    const gates: [number, number][] = [
+      [cx, cy - wallRy],
+      [cx + wallRx, cy],
+      [cx - wallRx, cy],
+    ];
+    for (const [gx, gy] of gates) {
+      if (Math.hypot(bx - gx, by - gy) < 55) return true;
+    }
+    return false;
+  };
+
   // Manzanas radiales compactas (5 anillos: casco denso, no metrópoli)
   const rings = 5;
   const rays = 28;
@@ -191,6 +218,7 @@ export function buildCityModel(opts?: {
       const by = cy + Math.sin(am) * rm * stretch;
       if (!insideWalls(bx, by, cx, cy, wallRx * 1.02, wallRy * 1.05, seed)) continue;
       if (by > coastY(bx) - 28) continue;
+      if (onAvenue(bx, by) || nearGate(bx, by)) continue;
 
       const chord = Math.abs(a1 - a0) * rm;
       const depth = (r1 - r0) * (0.72 + hash(i, ring, seed) * 0.2);
@@ -227,9 +255,12 @@ export function buildCityModel(opts?: {
         continue;
       }
 
-      // parcelas casi cuadradas, densas cerca de la plaza
-      const dens = dist < 0.22 ? 0.95 : dist < 0.45 ? 0.86 : 0.72;
-      const target = Math.max(14, Math.min(bw, bd, 28));
+      // barrio opulento cerca de la plaza: parcelas mayores y más altas
+      const opulent = dist < 0.18;
+      const dens = opulent ? 0.92 : dist < 0.28 ? 0.9 : dist < 0.45 ? 0.84 : 0.72;
+      const target = opulent
+        ? Math.max(18, Math.min(bw, bd, 34))
+        : Math.max(14, Math.min(bw, bd, 28));
       const cellsX = Math.max(1, Math.round(bw / target));
       const cellsY = Math.max(1, Math.round(bd / target));
       const cw = (bw - 3) / cellsX;
@@ -237,15 +268,33 @@ export function buildCityModel(opts?: {
       for (let iy = 0; iy < cellsY; iy++) {
         for (let ix = 0; ix < cellsX; ix++) {
           if (hash(i + ix * 19, ring + iy * 17, seed) > dens) continue;
-          const fill = 0.58 + hash(ix, iy + i, 22) * 0.24;
+          const fill = (opulent ? 0.68 : 0.56) + hash(ix, iy + i, 22) * 0.24;
           const m = Math.min(cw, ch) * fill;
-          const w = Math.max(6, Math.min(22, m * (0.9 + hash(ix, ring, 23) * 0.22)));
-          const d = Math.max(6, Math.min(22, m * (0.9 + hash(iy, i, 24) * 0.22)));
+          // variedad: ~12% casas alargadas / angostas; resto estándar
+          const odd = hash(ix + 3, iy + ring, 41);
+          let w = Math.max(6, Math.min(opulent ? 28 : 22, m * (0.9 + hash(ix, ring, 23) * 0.22)));
+          let d = Math.max(6, Math.min(opulent ? 26 : 22, m * (0.9 + hash(iy, i, 24) * 0.22)));
+          if (odd > 0.88) {
+            w *= 1.35;
+            d *= 0.72;
+          } else if (odd > 0.78) {
+            w *= 0.7;
+            d *= 1.4;
+          } else if (odd > 0.7 && opulent) {
+            // mansión casi cuadrada
+            const side = Math.max(w, d) * 1.15;
+            w = side;
+            d = side * 0.92;
+          }
           const px = x + 1.5 + ix * cw + Math.max(1.2, (cw - w) * 0.5);
           const py = y + 1.5 + iy * ch + Math.max(1.2, (ch - d) * 0.5);
+          if (onAvenue(px + w / 2, py + d / 2)) continue;
+          const hBase = opulent ? 5.2 : 3.5;
+          const hSpan = opulent ? 5.5 : dist < 0.38 ? 3.2 : 2.2;
           const h =
-            3.5 +
-            hash(px, py, 28) * (dist < 0.16 ? 4.8 : dist < 0.38 ? 3.2 : 2.2) +
+            hBase +
+            hash(px, py, 28) * hSpan +
+            (opulent && hash(px, py, 29) > 0.72 ? 3.2 : 0) +
             (dist < 0.09 && hash(px, py, 29) > 0.84 ? 2.2 : 0);
           let et = 0;
           if (dist > 0.55 && hash(px, py, 26) > 0.55) et = 1 + Math.floor(hash(py, px, 27) * 3);
@@ -258,6 +307,19 @@ export function buildCityModel(opts?: {
             seed: hash(px, py, 30),
             et,
           });
+          // ala secundaria ocasional (casa en L)
+          if (odd > 0.93 && opulent) {
+            const wing = Math.min(w, d) * 0.55;
+            buildings.push({
+              x: px + w * 0.55,
+              y: py + d * 0.15,
+              w: wing,
+              d: d * 0.7,
+              h: h * 0.85,
+              seed: hash(px + 1, py, 31),
+              et,
+            });
+          }
         }
       }
 
@@ -344,16 +406,24 @@ export function buildCityModel(opts?: {
       x: Math.round(cx),
       y: Math.round(cy - wallRy),
       nivel: 2,
-      nota: "Guarnición y camino real hacia Lexmara.",
+      nota: "Guarnición y Calle Real hacia Lexmara.",
       kind: "puerta",
     },
     {
       nombre: "Puerta del Este",
-      x: Math.round(cx + wallRx * 0.9),
+      x: Math.round(cx + wallRx),
       y: Math.round(cy),
       nivel: 2,
       nota: "Salida de caravanas.",
       kind: "puerta_este",
+    },
+    {
+      nombre: "Puerta del Oeste",
+      x: Math.round(cx - wallRx),
+      y: Math.round(cy),
+      nivel: 2,
+      nota: "Camino a las aldeas del interior.",
+      kind: "puerta_oeste",
     },
     {
       nombre: "Muralla",

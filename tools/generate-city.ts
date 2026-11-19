@@ -186,16 +186,26 @@ function drawStrip(model: CityModel, y0: number, h: number): Buffer {
     }
   }
 
-  // muralla (trazo continuo en tinta, sin cruces)
+  // muralla (trazo continuo; huecos en puerto + puertas N/E/O)
   {
     const [pcx, pcy] = plaza;
     const rx = model.wallRx;
     const ry = model.wallRy;
+    const angDist = (a: number, c: number) => {
+      let d = a - c;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      return Math.abs(d);
+    };
+    const inGap = (a: number) =>
+      angDist(a, Math.PI / 2) < 0.72 ||
+      angDist(a, -Math.PI / 2) < 0.042 ||
+      angDist(a, 0) < 0.042 ||
+      angDist(a, Math.PI) < 0.042;
     let prev: [number, number] | null = null;
     for (let i = 0; i <= 720; i++) {
       const a = (i / 720) * Math.PI * 2;
-      const south = Math.abs(((a - Math.PI / 2 + Math.PI) % (Math.PI * 2)) - Math.PI);
-      if (south < 0.72) {
+      if (inGap(a)) {
         prev = null;
         continue;
       }
@@ -417,7 +427,7 @@ async function writePacks(model: CityModel) {
     const cy = t.y + t.d / 2;
     const wM = t.w * metro;
     const dM = t.d * metro;
-    const h = Math.max(2.4, t.h);
+    const h = Math.max(2.8, t.h + 0.35);
     // yaw = atan2(dx,dz): eje local Z del box alineado al borde
     pushMuro(cx, cy - t.d / 2, wM, h, Math.PI / 2, t.seed, t.et); // norte (corre en +X)
     pushMuro(cx, cy + t.d / 2, wM, h, Math.PI / 2, t.seed, t.et); // sur
@@ -543,8 +553,10 @@ async function bakeOverlays(model: CityModel) {
     const y = Math.round(coastY(x / sx) * sy);
     set3(cerca, ow, x, y, 255);
     set3(lejos, ow, x, y, 255);
-    for (let yy = y + 2; yy < oh * 0.95; yy++) {
-      if ((x + yy) % 3 === 0) set3(lejos, ow, x, yy, 0, 180, 0);
+    for (let yy = y + 1; yy < oh * 0.98; yy++) {
+      // mar denso en suelo (R) para que el shader pinte agua continua, no manchas
+      set3(sueloBuf, cw, Math.round(x * (cw / ow)), Math.round(yy * (ch / oh)), 220, 0, 0);
+      if ((x + yy) % 2 === 0) set3(lejos, ow, x, yy, 200, 0, 0);
     }
   }
 
@@ -563,11 +575,33 @@ async function bakeOverlays(model: CityModel) {
     }
   }
 
-  // despeje avenida
-  for (let y = Math.round(ch * 0.2); y < cy * csy; y++) {
-    for (let x = Math.round(cx * csx) - 4; x <= Math.round(cx * csx) + 4; x++) {
-      set3(desBuf, cw, x, y, 220, 0, y > ch * 0.35 ? 200 : 0);
-      set3(callesBuf, cw, x, y, 200, 100, 220);
+  // Calle Real N–S (puerta norte → plaza → puerto) + cruces E–O
+  {
+    const wrx = model.wallRx;
+    const wry = model.wallRy;
+    const xC = Math.round(cx * csx);
+    const yN = Math.round((cy - wry) * csy);
+    const yS = Math.round((cy + wry * 0.55) * csy);
+    const half = 5;
+    for (let y = Math.min(yN, yS); y <= Math.max(yN, yS); y++) {
+      for (let x = xC - half; x <= xC + half; x++) {
+        set3(desBuf, cw, x, y, 220, 0, 200);
+        set3(callesBuf, cw, x, y, 220, 40, 240);
+      }
+    }
+    const xE = Math.round((cx + wrx * 0.92) * csx);
+    const xW = Math.round((cx - wrx * 0.92) * csx);
+    for (const y0 of [
+      Math.round(cy * csy),
+      Math.round((cy - wry * 0.22) * csy),
+      Math.round((cy + wry * 0.26) * csy),
+    ]) {
+      for (let x = Math.min(xW, xE); x <= Math.max(xW, xE); x++) {
+        for (let y = y0 - 3; y <= y0 + 3; y++) {
+          set3(desBuf, cw, x, y, 200, 0, 180);
+          set3(callesBuf, cw, x, y, 210, 50, 230);
+        }
+      }
     }
   }
 
